@@ -1,0 +1,62 @@
+{# 
+    BATTLE SHARE PAGE
+    -----------------
+    This page is shown after a host creates a new multiplayer battle. 
+    Its primary purpose is to provide the room code and invite link.
+
+    Key Features for Beginners:
+    1. Room Code Display: A large, easy-to-read 6-character code generated 
+       by the backend.
+    2. Clipboard API: Clicking "Copy Invite Link" uses modern JavaScript 
+       (navigator.clipboard) to copy the full URL to the user's clipboard.
+    3. Visual Effects: Uses a dashed spinning circle animation to give 
+       a "searching/waiting" feel.
+    4. Glassmorphism: Semi-transparent panel with blur effects for a modern UI.
+#}
+
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+    <!-- Main glass panel for the share interface -->
+    <div class="glass-panel text-center p-5 position-relative overflow-hidden" style="max-width: 500px;">
+        
+        <!-- Animated background circle for visual flair -->
+        <div style="position: absolute; width: 400px; height: 400px; border: 2px dashed var(--glass-border); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); animation: spinSlow 20s linear infinite;"></div>
+
+        <!-- Icon and Header -->
+        <div class="mb-4">
+            <i class="fas fa-fist-raised text-white fa-4x mb-3" style="text-shadow: 0 0 30px var(--primary-accent); color: var(--text-main) !important;"></i>
+            <h2 class="fw-bold text-white">Battle Ready</h2>
+            <p class="text-white-50">Share this access code with your opponent.</p>
+        </div>
+
+        <!-- The Room Code display box -->
+        <div class="p-4 rounded-3 mb-4 position-relative" style="background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border);">
+            <h1 class="display-4 fw-bold text-white mb-0" style="letter-spacing: 5px; font-family: monospace;">{{ code }}</h1>
+            <p class="text-white-50 small mt-2 mb-0">SESSION ID</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-grid gap-3">
+            {# 
+                JavaScript Clipboard Logic:
+                1. 'navigator.clipboard.writeText' copies the string to the clipboard.
+                2. 'url_for' with '_external=True' generates a full URL (e.g., http://localhost/join/ABCDEF).
+            #}
+            <button onclick="navigator.clipboard.writeText('{{ url_for('join_battle', code_val=code, _external=True) }}'); alert('Battle Link Copied!');" 
+                    class="btn btn-outline-light py-2">
+                <i class="fas fa-link me-2"></i> Copy Invite Link
+            </button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-glow py-2">
+                Return to Base
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    /* Slow rotation animation for the dashed background circle */
+    @keyframes spinSlow { to { transform: translate(-50%, -50%) rotate(360deg); } }
+</style>
+{% endblock %}

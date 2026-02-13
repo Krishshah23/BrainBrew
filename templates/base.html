@@ -1,0 +1,328 @@
+<!-- 
+    BrainBrew Base Layout
+    ---------------------
+    This is the skeleton file for the entire website. 
+    It contains the "Glassmorphism" theme (Dark/Light mode), the Navigation Bar, 
+    and the background animations. All other pages (like login, dashboard) 
+    "extend" this file to keep the design consistent.
+-->
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrainBrew | Intelligent Learning</title>
+    
+    <!-- 
+        External Libraries:
+        - Bootstrap: For layout and buttons
+        - FontAwesome: For icons (fire, moon, etc.)
+        - Google Fonts: For clean typography
+    -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#6366f1">
+
+    <style>
+        /* 
+            Design System (CSS Variables)
+            ----------------------------
+            We use variables so we can easily switch between Dark and Light mode.
+            Think of these as "settings" for the colors of the site.
+        */
+        :root {
+            /* DARK MODE SETTINGS */
+            --bg-color: #050505;
+            --glass-bg: rgba(20, 20, 20, 0.9); 
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --primary-accent: #6366f1; /* Indigo */
+            --secondary-accent: #ec4899; /* Pink */
+            --text-main: #ffffff;
+            --text-muted: #e2e8f0; 
+            --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            --input-bg: rgba(255, 255, 255, 0.1);
+            --nav-bg: rgba(10, 10, 10, 0.95);
+            --blob-opacity: 0.4;
+        }
+
+        /* LIGHT MODE SETTINGS (Active when data-theme="light") */
+        [data-theme="light"] {
+            --bg-color: #f3f4f6;
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            --primary-accent: #4f46e5;
+            --secondary-accent: #db2777;
+            --text-main: #0f172a; 
+            --text-muted: #475569; 
+            --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            --input-bg: rgba(0, 0, 0, 0.06); 
+            --nav-bg: rgba(255, 255, 255, 0.9);
+            --blob-opacity: 0.2;
+        }
+
+        /* 
+            Global Styles
+            -------------
+            These apply to every page on the site.
+        */
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            min-height: 100vh; 
+            overflow-x: hidden; 
+            position: relative; 
+            transition: 0.3s; 
+        }
+
+        /* The "Glass" effect container */
+        .glass-panel { 
+            background: var(--glass-bg); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px); 
+            border: 1px solid var(--glass-border); 
+            border-radius: 24px; 
+            padding: 32px; 
+            box-shadow: var(--card-shadow); 
+            transition: 0.3s; 
+        }
+
+        .glass-panel:hover { 
+            transform: translateY(-2px); 
+            border-color: var(--primary-accent); 
+        }
+
+        /* Navigation Bar Styling */
+        .glass-nav { 
+            background: var(--nav-bg); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid var(--glass-border); 
+            border-radius: 100px; 
+            padding: 12px 24px; 
+        }
+
+        /* Background Animated Blobs */
+        .aurora-blob { 
+            position: fixed; 
+            border-radius: 50%; 
+            filter: blur(80px); 
+            z-index: -1; 
+            animation: float 10s infinite alternate; 
+            opacity: var(--blob-opacity); 
+        }
+        .blob-1 { top: -10%; left: -10%; width: 500px; height: 500px; background: var(--primary-accent); }
+        .blob-2 { bottom: -10%; right: -10%; width: 600px; height: 600px; background: var(--secondary-accent); animation-delay: -5s; }
+        
+        @keyframes float { 
+            0% { transform: translate(0, 0); } 
+            100% { transform: translate(50px, 50px); } 
+        }
+
+        /* Loading Screen */
+        #loader { 
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.8); 
+            backdrop-filter: blur(10px); 
+            z-index: 9999; 
+            display: none; 
+            justify-content: center; 
+            align-items: center; 
+            flex-direction: column; 
+        }
+        .loader-spinner { 
+            width: 50px; height: 50px; 
+            border: 3px solid rgba(255,255,255,0.1); 
+            border-radius: 50%; 
+            border-top-color: var(--primary-accent); 
+            animation: spin 1s infinite; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Form Visibility Fixes */
+        .form-control::placeholder { color: #cbd5e1 !important; opacity: 1 !important; font-weight: 500; }
+        .form-control, .form-select { color: #ffffff !important; background-color: var(--input-bg) !important; border: 1px solid var(--glass-border) !important; }
+        select option { background-color: #222222 !important; color: #ffffff !important; }
+        
+        /* Force Purple Accents */
+        .btn-primary, .bg-primary, .text-primary { background-color: var(--primary-accent) !important; border-color: var(--primary-accent) !important; color: white !important; }
+        
+        /* Theme Toggle Button Styling */
+        .theme-toggle {
+            width: 42px; height: 42px;
+            border-radius: 50% !important;
+            padding: 0 !important;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid var(--glass-border);
+        }
+        .theme-toggle:hover {
+            transform: rotate(15deg) scale(1.1);
+            background-color: var(--primary-accent) !important;
+            color: white !important;
+            border-color: var(--primary-accent) !important;
+        }
+
+        /* Light Mode Specific Overrides */
+        [data-theme="light"] .blob-1 { background: #c7d2fe; }
+        [data-theme="light"] .blob-2 { background: #fbcfe8; }
+        [data-theme="light"] .form-control, [data-theme="light"] .form-select { color: #1e293b !important; background-color: #ffffff !important; border: 1px solid #e2e8f0 !important; }
+        [data-theme="light"] select option { background-color: #ffffff !important; color: #000000 !important; }
+    </style>
+</head>
+<body>
+    <!-- Full-page Loader (Visible during form submissions) -->
+    <div id="loader">
+        <div class="loader-spinner mb-3"></div>
+        <div class="text-white small fw-bold">PROCESSING...</div>
+    </div>
+
+    <!-- Animated background blobs -->
+    <div class="aurora-blob blob-1"></div>
+    <div class="aurora-blob blob-2"></div>
+
+    <!-- 
+        Navigation Bar
+        --------------
+        Contains links to Dashboard, Leaderboard, etc. 
+        Changes depending on whether the user is logged in.
+    -->
+    <div class="container nav-container sticky-top">
+        <nav class="navbar navbar-expand-lg glass-nav">
+            <div class="container-fluid">
+                <!-- App Logo -->
+                <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ url_for('index') }}" style="color: var(--text-main);">
+                    <div class="rounded-circle d-flex justify-content-center align-items-center me-2" style="width: 30px; height: 30px; background: var(--text-main);">
+                        <i class="fas fa-bolt" style="font-size: 0.8rem; color: var(--bg-color);"></i>
+                    </div>BrainBrew
+                </a>
+
+                <!-- Mobile Menu Button -->
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                    <span class="fas fa-bars" style="color: var(--text-main);"></span>
+                </button>
+
+                <!-- Nav Links -->
+                <div class="collapse navbar-collapse" id="navContent">
+                    <ul class="navbar-nav ms-auto align-items-center">
+                        
+                        {% if session.user_id %}
+                            <!-- Links for Logged-In Users -->
+                            {% if session.get('role') == 'admin' %}
+                                <li class="nav-item"><a class="nav-link active" href="{{ url_for('admin_dashboard') }}">Admin Panel</a></li>
+                            {% else %}
+                                <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Home</a></li>
+                                <li class="nav-item"><a class="nav-link" href="{{ url_for('flashcard_setup') }}">Study</a></li>
+                                <li class="nav-item"><a class="nav-link" href="{{ url_for('create_battle') }}">Battle</a></li>
+                            {% endif %}
+                            
+                            <li class="nav-item"><a class="nav-link" href="{{ url_for('leaderboard') }}">Leaderboard</a></li>
+
+                            <!-- Daily Streak Display -->
+                            <li class="nav-item ms-2">
+                                <span class="nav-link text-warning" title="Your Daily Login Streak">
+                                    <i class="fas fa-fire me-1"></i> {{ session.get('streak', 0) }}
+                                </span>
+                            </li>
+                            
+                            <!-- Theme Switcher (Moon/Sun) -->
+                            <li class="nav-item ms-3">
+                                <div class="theme-toggle" id="themeSwitcher" title="Change Theme">
+                                    <i class="fas fa-moon"></i>
+                                </div>
+                            </li>
+
+                            <!-- Logout -->
+                            <li class="nav-item ms-2">
+                                <a href="{{ url_for('logout') }}" class="btn btn-sm" style="color: var(--text-muted);" title="Logout">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                </a>
+                            </li>
+                        
+                        {% else %}
+                            <!-- Links for Guests -->
+                            <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Sign In</a></li>
+                            <li class="nav-item ms-2"><div class="theme-toggle" id="themeSwitcher"><i class="fas fa-moon"></i></div></li>
+                            <li class="nav-item ms-2"><a class="btn btn-sm btn-glow py-2 px-4" href="{{ url_for('register') }}">Join Now</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- 
+        Main Content Area
+        -----------------
+        Other pages (login.html, etc.) inject their content here.
+    -->
+    <div class="container mt-5 mb-5 fade-in">
+        <!-- Flash Messages (Alerts for Success/Error) -->
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+            <div class="glass-panel py-3 px-4 mb-4 d-flex align-items-center justify-content-between" style="border-left: 4px solid var(--primary-accent);">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="fas fa-bell" style="color: var(--text-main);"></i>
+                    <span class="small" style="color: var(--text-main);">{{ message }}</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" style="filter: invert(1) grayscale(100%) brightness(200%);"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <!-- This is where the page-specific code goes! -->
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Scripts (Bootstrap + Custom Theme Switcher) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // --- 1. THEME SWITCHER LOGIC ---
+        const themeBtn = document.getElementById('themeSwitcher');
+        const themeIcon = themeBtn.querySelector('i');
+        const html = document.documentElement;
+
+        // Check if user has a preference saved in their browser
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        html.setAttribute('data-theme', savedTheme);
+        updateIcon(savedTheme);
+
+        themeBtn.addEventListener('click', () => {
+            const current = html.getAttribute('data-theme');
+            const newTheme = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateIcon(newTheme);
+        });
+
+        function updateIcon(t) { 
+            themeIcon.className = t === 'dark' ? 'fas fa-moon' : 'fas fa-sun'; 
+        }
+
+        // --- 2. UI SOUND EFFECTS ---
+        const hoverSound = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3");
+        const clickSound = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-modern-click-box-check-1120.mp3");
+        hoverSound.volume=0.2; clickSound.volume=0.4;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Play sound when hovering or clicking buttons
+            document.querySelectorAll('a, button, input, select').forEach(el => {
+                el.addEventListener('mouseenter', () => hoverSound.play().catch(()=>{}));
+                el.addEventListener('click', () => clickSound.play().catch(()=>{}));
+            });
+
+            // Show loading spinner when a form is submitted
+            document.querySelectorAll('form').forEach(f => {
+                f.addEventListener('submit', () => { 
+                    if(f.checkValidity()) document.getElementById('loader').style.display='flex'; 
+                });
+            });
+        });
+    </script>
+</body>
+</html>

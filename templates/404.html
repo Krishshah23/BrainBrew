@@ -1,0 +1,53 @@
+{# 
+    404 ERROR PAGE
+    --------------
+    This page is shown automatically by Flask when a user tries to access 
+    a URL that doesn't exist. It provides a friendly "Lost in Space" theme 
+    to guide the user back to the dashboard.
+
+    Key Features for Beginners:
+    1. Animations: Uses CSS @keyframes to make the astronaut float and 
+       the question mark pulse.
+    2. text-gradient: A custom utility class for colorful headings.
+    3. btn-glow: A custom utility class for a glowing button effect.
+#}
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="glass-panel text-center p-5" style="max-width: 600px;">
+        
+        <!-- Animated Icon Section -->
+        <div class="mb-4 position-relative">
+            <!-- Floating Astronaut -->
+            <i class="fas fa-user-astronaut text-white" style="font-size: 8rem; animation: floatError 6s ease-in-out infinite;"></i>
+            <!-- Pulsing Question Mark -->
+            <i class="fas fa-question position-absolute text-danger" style="font-size: 3rem; top: 0; right: 25%; animation: pulse 2s infinite;"></i>
+        </div>
+
+        <!-- Error Text -->
+        <h1 class="display-1 fw-bold text-gradient">404</h1>
+        <h3 class="text-white fw-bold">Signal Lost</h3>
+        <p class="text-muted mb-4">The coordinates you entered point to an empty void. Let's get you back to base.</p>
+
+        <!-- Navigation Button -->
+        <a href="{{ url_for('dashboard') }}" class="btn btn-glow px-5">
+            <i class="fas fa-radar me-2"></i> Return to Command
+        </a>
+    </div>
+</div>
+
+<!-- CSS ANIMATIONS -->
+<style>
+    /* Makes the astronaut move up and down slightly */
+    @keyframes floatError {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(10deg); }
+    }
+    /* Makes the question mark fade in and out */
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+</style>
+{% endblock %}

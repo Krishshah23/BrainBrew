@@ -1,0 +1,64 @@
+{# 
+    LOGIN PAGE
+    ----------
+    This is the first screen users see. It allows existing users to enter 
+    their credentials and access their account.
+
+    Key Features for Beginners:
+    1. 'extends base.html': This means we are using the main layout skeleton 
+       defined in base.html. We only provide the content for the middle section.
+    2. 'glass-panel': A custom CSS class from base.html that gives that 
+       modern "see-through" blurred look.
+    3. 'form action="..." method="POST"': This sends the user's input to the 
+       '/login' route in app.py when the button is clicked.
+#}
+
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-5 col-lg-4">
+        
+        <!-- Main Login Card -->
+        <div class="glass-panel text-center position-relative overflow-hidden">
+            <!-- Decorative Top Border -->
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);"></div>
+
+            <!-- Header Section -->
+            <div class="mb-4">
+                <i class="fas fa-fingerprint fa-3x text-white mb-3" style="opacity: 0.8;"></i>
+                <h2 class="fw-bold text-gradient">Welcome Back</h2>
+                <p class="text-muted small">Access your personal learning terminal</p>
+            </div>
+
+            <!-- Login Form -->
+            <form action="{{ url_for('login') }}" method="POST">
+                <!-- Email Input -->
+                <div class="mb-3 text-start">
+                    <label class="small text-white-50 fw-bold mb-2 ms-1">EMAIL</label>
+                    <input type="email" name="email" class="form-control" placeholder="name@example.com" required>
+                </div>
+
+                <!-- Password Input -->
+                <div class="mb-4 text-start">
+                    <label class="small text-white-50 fw-bold mb-2 ms-1">PASSWORD</label>
+                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-glow w-100">
+                    Enter Dashboard
+                </button>
+            </form>
+
+            <!-- Footer Section: Link to Register -->
+            <div class="mt-4 pt-4 border-top border-white border-opacity-10">
+                <p class="text-muted small mb-0">
+                    First time here? <a href="{{ url_for('register') }}" class="text-white fw-bold">Create Identity</a>
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

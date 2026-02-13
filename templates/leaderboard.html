@@ -1,0 +1,99 @@
+{# 
+    LEADERBOARD PAGE
+    ----------------
+    This page displays the top performers on BrainBrew. Users are 
+    ranked primarily by their Total XP (sum of all quiz scores) 
+    and their login streaks.
+
+    Key Features for Beginners:
+    1. Global Ranking Logic: The SQL query in app.py sorts users by 
+       Total XP in descending order.
+    2. Loop Index: We use 'loop.index' to display the rank (1, 2, 3, etc.) 
+       and show special emojis (🥇, 🥈, 🥉) for the top 3 players.
+    3. Conditional Highlighting: If a user in the list is the currently 
+       logged-in user, we add a "(You)" tag next to their name.
+    4. Streak Badges: Users with an active streak get a fire icon badge 
+       to showcase their consistency.
+#}
+
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        
+        <!-- HEADER SECTION -->
+        <div class="glass-panel text-center mb-4">
+            <h1 class="fw-bold text-white mb-2"><i class="fas fa-trophy text-warning me-2"></i>Global Rankings</h1>
+            <p class="text-white-50">Top Agents ranked by Total XP & Streaks.</p>
+        </div>
+
+        <!-- RANKING TABLE -->
+        <div class="glass-panel p-0 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table text-white mb-0" style="--bs-table-bg: transparent;">
+                    <thead class="bg-white bg-opacity-10">
+                        <tr class="text-white small fw-bold text-uppercase">
+                            <th class="py-3 ps-4">Rank</th>
+                            <th class="py-3">Agent</th>
+                            <th class="py-3 text-center">Streak</th>
+                            <th class="py-3 text-end pe-4">Total XP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in leaders %}
+                        <!-- Each Player Row -->
+                        <tr class="align-middle border-bottom border-white border-opacity-10">
+                            <!-- Rank Column with Emojis for Top 3 -->
+                            <td class="ps-4 py-3 fw-bold" style="font-size: 1.2rem;">
+                                {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}#{{ loop.index }}{% endif %}
+                            </td>
+                            
+                            <!-- Agent Name & Avatar -->
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    {% if not player.profile_pic or player.profile_pic == 'default.png' %}
+                                        <img src="https://ui-avatars.com/api/?name={{ player.name }}&background=6366f1&color=fff&bold=true" 
+                                             class="rounded-circle border border-white border-opacity-25 shadow-sm" 
+                                             width="40" height="40" style="object-fit: cover;">
+                                    {% else %}
+                                        <img src="{{ url_for('static', filename='uploads/' + player.profile_pic) }}" 
+                                             class="rounded-circle border border-white border-opacity-25 shadow-sm" 
+                                             width="40" height="40" style="object-fit: cover;">
+                                    {% endif %}
+                                    <span class="fw-bold {{ 'text-warning' if loop.index == 1 else 'text-white' }}">
+                                        {{ player.name }}
+                                        {% if player.name == session.name %}
+                                            <small class="text-muted ms-1">(You)</small>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </td>
+
+                            <!-- Streak Column -->
+                            <td class="text-center">
+                                {% if player.streak > 0 %}
+                                <span class="badge bg-danger bg-opacity-20 text-warning border border-danger border-opacity-25">
+                                    <i class="fas fa-fire me-1"></i> {{ player.streak }}
+                                </span>
+                                {% else %}
+                                <span class="text-white-50">-</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Total XP Column -->
+                            <td class="text-end pe-4">
+                                <span class="badge bg-white bg-opacity-10 border border-white border-opacity-20 px-3 py-2 rounded-pill">
+                                    {{ player.total_xp if player.total_xp else 0 }} XP
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

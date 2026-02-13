@@ -1,0 +1,174 @@
+{# 
+    QUIZ SETUP PAGE
+    ---------------
+    This page allows users to customize their quiz session by selecting 
+    a category, difficulty level, and the number of questions.
+
+    Key Features for Beginners:
+    1. Dynamic Question Count: When you change the category or difficulty, 
+       the 'updateMaxQuestions' JavaScript function runs. It calls an API 
+       (/api/get_count) to check how many questions exist in the database 
+       for that specific combination.
+    2. Slider Input: We use a range input for selecting the number of questions. 
+       The maximum value of this slider is updated dynamically based on 
+       the available questions found in step 1.
+    3. Session Data: We display the user's name and profile picture from 
+       the Flask session to make the experience personal.
+#}
+
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-4">
+    
+    <!-- Left Column: Setup Form -->
+    <div class="col-lg-8">
+        <div class="glass-panel h-100 d-flex flex-column justify-content-center position-relative overflow-hidden">
+            <!-- Background Icon for Design -->
+            <i class="fas fa-brain position-absolute text-white" style="font-size: 20rem; opacity: 0.03; right: -50px; bottom: -50px;"></i>
+
+            <div class="mb-5">
+                <h1 class="display-5 fw-bold text-white mb-2">Ready to Brew?</h1>
+                <p class="text-white-50 lead" style="max-width: 80%;">Customize your session parameters.</p>
+            </div>
+
+            <!-- Quiz Configuration Form -->
+            <form action="{{ url_for('start_quiz') }}" method="POST">
+                <div class="row g-4">
+                    <!-- Category Selection -->
+                    <div class="col-md-6">
+                        <label class="text-white-50 small fw-bold mb-2">TOPIC</label>
+                        <select name="category" id="categorySelect" class="form-select" onchange="updateMaxQuestions()">
+                            <option value="All">⚡ Mix of Everything</option>
+                            {% for c in categories %}
+                            <option value="{{ c[0] }}">{{ c[0] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Difficulty Selection -->
+                    <div class="col-md-6">
+                        <label class="text-white-50 small fw-bold mb-2">DIFFICULTY</label>
+                        <select name="difficulty" id="difficultySelect" class="form-select" onchange="updateMaxQuestions()">
+                            <option value="All">🎲 Random Challenge</option>
+                            <option value="Easy">🟢 Easy</option>
+                            <option value="Medium">🟡 Medium</option>
+                            <option value="Hard">🔴 Hard</option>
+                        </select>
+                    </div>
+
+                    <!-- Number of Questions Slider -->
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-end mb-2">
+                            <label class="text-white-50 small fw-bold">NUMBER OF QUESTIONS</label>
+                            <span class="badge bg-primary bg-opacity-20 text-primary border border-primary border-opacity-20" id="availableBadge">
+                                Available: {{ max_q }}
+                            </span>
+                        </div>
+                        <input type="range" class="form-range" min="1" max="{{ max_q }}" value="5" name="num_questions" id="qRange"
+                               oninput="document.getElementById('qVal').innerText = this.value">
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span class="text-white-50">1</span>
+                            <span class="text-white fw-bold"><span id="qVal">5</span> Questions</span>
+                            <span class="text-white-50" id="maxLabel">{{ max_q }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-glow mt-5 w-100 py-3 fs-5" id="startBtn">
+                    <i class="fas fa-play me-2"></i> Initialize Session
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Column: User Info & Quick Links -->
+    <div class="col-lg-4">
+        <div class="d-flex flex-column gap-4 h-100">
+            <!-- User Profile Summary -->
+            <div class="glass-panel d-flex align-items-center gap-3">
+                <div class="position-relative">
+                    {% if session.get('profile_pic') == 'default.png' %}
+                        <img src="https://ui-avatars.com/api/?name={{ session.name }}&background=6366f1&color=fff&bold=true" 
+                             class="rounded-circle" width="80" height="80" style="object-fit: cover; border: 2px solid var(--glass-border);">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='uploads/' + session.get('profile_pic')) }}" 
+                             class="rounded-circle" width="80" height="80" style="object-fit: cover; border: 2px solid var(--glass-border);">
+                    {% endif %}
+                    <div class="position-absolute bottom-0 end-0 bg-success rounded-circle border border-dark" style="width: 15px; height: 15px;"></div>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0 text-white">{{ session.name }}</h5>
+                    <span class="badge bg-white bg-opacity-10 text-white border border-white border-opacity-10">{{ session.role|capitalize }}</span>
+                </div>
+            </div>
+
+            <!-- Quick Link: Battle Mode -->
+            <a href="{{ url_for('create_battle') }}" class="glass-panel flex-grow-1 d-flex flex-column justify-content-center text-center position-relative overflow-hidden" 
+               style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(99, 102, 241, 0.05)); border-color: rgba(99, 102, 241, 0.3);">
+                <div class="mb-3"><i class="fas fa-bolt fa-3x text-white"></i></div>
+                <h4 class="fw-bold text-white">Battle Mode</h4>
+                <p class="text-white-50 small">Challenge a peer.</p>
+            </a>
+
+            <!-- Quick Link: Repair Station -->
+            <a href="{{ url_for('retry_mistakes') }}" class="glass-panel flex-grow-1 d-flex flex-column justify-content-center text-center position-relative overflow-hidden"
+               style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(236, 72, 153, 0.05)); border-color: rgba(236, 72, 153, 0.3);">
+                <div class="mb-3"><i class="fas fa-wrench fa-3x text-white"></i></div>
+                <h4 class="fw-bold text-white">Repair Station</h4>
+                <p class="text-white-50 small">Fix mistakes.</p>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- DYNAMIC QUESTION COUNT SCRIPT -->
+<script>
+    /**
+     * This function runs whenever the Category or Difficulty dropdown changes.
+     * It uses the 'fetch' API to ask the server: "How many questions do you 
+     * have for Category X and Difficulty Y?"
+     */
+    function updateMaxQuestions() {
+        const category = document.getElementById('categorySelect').value;
+        const difficulty = document.getElementById('difficultySelect').value;
+        const slider = document.getElementById('qRange');
+        const maxLabel = document.getElementById('maxLabel');
+        const badge = document.getElementById('availableBadge');
+        const startBtn = document.getElementById('startBtn');
+
+        // Call the API endpoint
+        fetch(`/api/get_count?category=${encodeURIComponent(category)}&difficulty=${encodeURIComponent(difficulty)}`)
+            .then(response => response.json())
+            .then(data => {
+                const count = data.count;
+                
+                // Update the slider's maximum limit
+                slider.max = count;
+                maxLabel.innerText = count;
+                badge.innerText = `Available: ${count}`;
+                
+                // If no questions are found, disable the button and slider
+                if (count === 0) {
+                    startBtn.disabled = true;
+                    startBtn.innerHTML = '<i class="fas fa-ban me-2"></i> No Questions';
+                    slider.value = 0;
+                    slider.disabled = true;
+                } else {
+                    // Otherwise, enable everything and adjust slider value if needed
+                    startBtn.disabled = false;
+                    startBtn.innerHTML = '<i class="fas fa-play me-2"></i> Initialize Session';
+                    slider.disabled = false;
+                    
+                    // Prevent slider from being higher than available count
+                    if (parseInt(slider.value) > count) slider.value = count;
+                    // Ensure at least 1 question is selected if available
+                    if (parseInt(slider.value) === 0 && count > 0) slider.value = 1;
+                }
+                // Update the visible number next to the slider
+                document.getElementById('qVal').innerText = slider.value;
+            });
+    }
+</script>
+{% endblock %}

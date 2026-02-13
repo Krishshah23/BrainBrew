@@ -1,0 +1,14 @@
+# BrainBrew: Project Dependencies
+# ------------------------------
+# These are the Python libraries required to run the application.
+# You can install them all at once using: pip install -r requirements.txt
+
+# The core web framework that handles routing, sessions, and template rendering.
+Flask
+
+# Security utilities for hashing and checking user passwords.
+# (Usually comes pre-installed with Flask)
+Werkzeug
+
+# A library for generating dynamic PDF files (used for Achievement Certificates).
+fpdf

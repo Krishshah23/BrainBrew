@@ -1,0 +1,103 @@
+{# 
+    REGISTRATION PAGE
+    -----------------
+    This page allows new users to join BrainBrew. It includes a built-in 
+    password strength validator to ensure security.
+
+    Key Features for Beginners:
+    1. Form Validation: The "Create Account" button is disabled until the 
+       password meets all security requirements.
+    2. JavaScript Logic: We use a small script at the bottom to check 
+       password length, numbers, and special characters in real-time.
+    3. Bootstrap Classes: Classes like 'col-md-5' and 'd-flex' help 
+       make the layout responsive and centered.
+#}
+
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-5 col-lg-4">
+        
+        <!-- Registration Card -->
+        <div class="glass-panel text-center position-relative overflow-hidden">
+            <!-- Decorative Top Border -->
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);"></div>
+
+            <!-- Header Section -->
+            <div class="mb-4">
+                <div class="mb-3">
+                    <i class="fas fa-rocket fa-3x text-gradient"></i>
+                </div>
+                <h3 class="fw-bold text-white">Create Account</h3>
+                <p class="text-white-50 small">Join the platform to start tracking your progress.</p>
+            </div>
+
+            <!-- Registration Form -->
+            <form action="{{ url_for('register') }}" method="POST">
+                <!-- Name Input -->
+                <div class="mb-3 text-start">
+                    <label class="small text-white-50 fw-bold mb-1 ms-1">FULL NAME</label>
+                    <input type="text" name="name" class="form-control" placeholder="Your name" required>
+                </div>
+
+                <!-- Email Input -->
+                <div class="mb-3 text-start">
+                    <label class="small text-white-50 fw-bold mb-1 ms-1">EMAIL</label>
+                    <input type="email" name="email" class="form-control" placeholder="you@example.com" required>
+                </div>
+
+                <!-- Password Input & Strength Feedback -->
+                <div class="mb-4 text-start">
+                    <label class="small text-white-50 fw-bold mb-1 ms-1">PASSWORD</label>
+                    <input type="password" id="passwordInput" name="password" class="form-control" placeholder="••••••••" required>
+                    <!-- This div will show "Strong Password" or error messages via JS -->
+                    <div class="mt-2" id="passwordFeedback"></div>
+                </div>
+
+                <!-- Submit Button (starts disabled) -->
+                <button type="submit" id="submitBtn" class="btn btn-glow w-100" disabled>
+                    Create Account
+                </button>
+            </form>
+
+            <!-- PASSWORD VALIDATOR SCRIPT -->
+            <script>
+                const passwordInput = document.getElementById('passwordInput');
+                const submitBtn = document.getElementById('submitBtn');
+                const feedback = document.getElementById('passwordFeedback');
+
+                // Listen for every keystroke in the password field
+                passwordInput.addEventListener('input', function() {
+                    const val = passwordInput.value;
+                    let valid = true;
+                    let msg = [];
+
+                    // Check security rules
+                    if (val.length <= 8) { valid = false; msg.push("Length > 8"); }
+                    if (!/\d/.test(val)) { valid = false; msg.push("Number"); }
+                    if (!/[A-Z]/.test(val)) { valid = false; msg.push("Capital"); }
+                    if (!/[!@#$%^&*]/.test(val)) { valid = false; msg.push("Special Char"); }
+
+                    // Update UI based on validity
+                    if (valid) {
+                        submitBtn.disabled = false; // Enable button
+                        feedback.innerHTML = '<span class="text-success small"><i class="fas fa-check-circle"></i> Strong Password</span>';
+                    } else {
+                        submitBtn.disabled = true; // Keep button disabled
+                        feedback.innerHTML = '<span class="text-danger small">' + msg.join(', ') + '</span>';
+                    }
+                });
+            </script>
+
+            <!-- Footer: Link to Login -->
+            <div class="mt-4 pt-4 border-top border-white border-opacity-10 text-center">
+                <p class="text-white-50 small mb-0">
+                    Already have an account? <a href="{{ url_for('index') }}" class="text-white fw-bold text-decoration-none">Sign In</a>
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

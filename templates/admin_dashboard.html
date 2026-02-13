@@ -1,0 +1,309 @@
+{# 
+    ADMIN DASHBOARD
+    ---------------
+    This is the control panel for administrators. It allows them to 
+    view system stats, add/delete questions, manage users, and 
+    handle issue reports.
+
+    Key Features for Beginners:
+    1. Stats Cards: Displays high-level data like total users and average scores.
+    2. Multi-Part Forms: Includes forms for manual question entry and 
+       bulk CSV uploads.
+    3. File Validation: A JavaScript snippet checks that only .csv files 
+       are selected for bulk uploads.
+    4. Dynamic Tables: Uses 'max-height' and 'overflow-y: auto' to keep 
+       long lists of questions and users scrollable within a fixed area.
+    5. Modals for Editing: Uses a Bootstrap Modal to edit questions 
+       directly from the reports table.
+    6. Danger Zone: A section for irreversible actions like a full progress reset.
+#}
+
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- TOP ROW: SYSTEM STATS -->
+    <div class="col-12">
+        <div class="glass-panel d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold text-white mb-0">Command Center</h2>
+                <p class="text-white-50 mb-0">System Overview & Question Management</p>
+            </div>
+            <!-- Stats Counters -->
+            <div class="d-flex gap-3 text-center">
+                <div class="px-3"><h3 class="fw-bold text-white mb-0">{{ stats.users }}</h3><small class="text-white-50 small">USERS</small></div>
+                <div class="px-3 border-start border-white border-opacity-10"><h3 class="fw-bold text-primary mb-0">{{ stats.quizzes }}</h3><small class="text-white-50 small">QUIZZES</small></div>
+                <div class="px-3 border-start border-white border-opacity-10"><h3 class="fw-bold text-success mb-0">{{ stats.avg }}%</h3><small class="text-white-50 small">AVG SCORE</small></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEFT COLUMN: ADDING QUESTIONS -->
+    <div class="col-lg-4">
+        <div class="glass-panel h-100">
+            <h5 class="fw-bold text-white mb-4"><i class="fas fa-plus-circle me-2"></i>Inject Data</h5>
+            
+            <!-- Manual Entry Form -->
+            <form action="{{ url_for('admin_dashboard') }}" method="POST" enctype="multipart/form-data">
+                <div class="mb-3"><input type="text" name="question" class="form-control" placeholder="Question Text..." required></div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6"><input type="text" name="option_a" class="form-control" placeholder="Option A" required></div>
+                    <div class="col-6"><input type="text" name="option_b" class="form-control" placeholder="Option B" required></div>
+                    <div class="col-6"><input type="text" name="option_c" class="form-control" placeholder="Option C" required></div>
+                    <div class="col-6"><input type="text" name="option_d" class="form-control" placeholder="Option D" required></div>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <select name="correct" class="form-select">
+                            <option value="A">Correct: A</option><option value="B">Correct: B</option><option value="C">Correct: C</option><option value="D">Correct: D</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <select name="difficulty" class="form-select">
+                            <option value="Easy">Diff: Easy</option><option value="Medium">Diff: Medium</option><option value="Hard">Diff: Hard</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3"><input type="text" name="category" class="form-control" placeholder="Category" required></div>
+                <div class="mb-3"><textarea name="explanation" class="form-control" placeholder="Explanation (Optional)" rows="2"></textarea></div>
+                <div class="mb-3"><label class="text-white-50 small">Image (Optional)</label><input type="file" name="image" class="form-control"></div>
+                <button type="submit" class="btn btn-glow w-100">Add to Database</button>
+            </form>
+
+            <hr class="border-white border-opacity-10 my-4">
+
+            <!-- Bulk CSV Upload Form -->
+            <form action="{{ url_for('upload_csv') }}" method="POST" enctype="multipart/form-data">
+                <label class="text-white-50 small mb-2">Bulk Upload (CSV)</label>
+                
+                <!-- Hidden Alert Box for file errors -->
+                <div id="fileAlert" class="alert alert-danger d-none alert-dismissible fade show" role="alert">
+                    <strong>Error!</strong> Only .csv files are allowed.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <div class="input-group">
+                    <input type="file" id="csvInput" name="file" class="form-control" accept=".csv" required>
+                    <button class="btn btn-outline-light" id="uploadBtn" type="submit">Upload</button>
+                </div>
+            </form>
+
+            <!-- CSV VALIDATION SCRIPT -->
+            <script>
+                document.getElementById('csvInput').addEventListener('change', function() {
+                    const fileInput = this;
+                    const filePath = fileInput.value;
+                    const allowedExtensions = /(\.csv)$/i;
+                    const alertBox = document.getElementById('fileAlert');
+                    const uploadBtn = document.getElementById('uploadBtn');
+
+                    // If file is not a CSV, block upload and show alert
+                    if (!allowedExtensions.exec(filePath)) {
+                        alertBox.classList.remove('d-none');
+                        fileInput.value = '';
+                        uploadBtn.disabled = true;
+                    } else {
+                        alertBox.classList.add('d-none');
+                        uploadBtn.disabled = false;
+                    }
+                });
+            </script>
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN: MANAGEMENT TABLES -->
+    <div class="col-lg-8">
+        <div class="d-flex flex-column gap-4 h-100">
+            <!-- Question Bank Table -->
+            <div class="glass-panel flex-grow-1 d-flex flex-column">
+                <h6 class="text-white-50 fw-bold text-uppercase mb-3">Question Bank ({{ questions|length }})</h6>
+                <div class="table-responsive flex-grow-1" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table text-white mb-0" style="--bs-table-bg: transparent;">
+                        <thead class="bg-white bg-opacity-10 sticky-top"><tr><th>Question</th><th>Cat</th><th class="text-end">Action</th></tr></thead>
+                        <tbody>
+                            {% for q in questions %}
+                            <tr class="align-middle border-bottom border-white border-opacity-10">
+                                <td class="text-white-50 small text-truncate" style="max-width: 300px;">{{ q['question_text'] }}</td>
+                                <td><span class="badge bg-white bg-opacity-10 border border-white border-opacity-10">{{ q['category'] }}</span></td>
+                                <td class="text-end">
+                                    <form action="{{ url_for('delete_question', qid=q['id']) }}" method="POST" class="d-inline">
+                                        <button class="btn btn-sm btn-outline-danger border-0"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- User Management Table -->
+            <div class="glass-panel" style="min-height: 250px;">
+                <h6 class="text-info fw-bold text-uppercase mb-3"><i class="fas fa-users me-2"></i>User Management</h6>
+                <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                    <table class="table text-white mb-0" style="--bs-table-bg: transparent;">
+                        <thead><tr><th>Name</th><th>Email</th><th class="text-end">Action</th></tr></thead>
+                        <tbody>
+                            {% for u in users %}
+                            <tr class="align-middle border-bottom border-white border-opacity-10">
+                                <td class="text-white small">{{ u['name'] }}</td>
+                                <td class="text-white-50 small">{{ u['email'] }}</td>
+                                <td class="text-end">
+                                    <form action="{{ url_for('delete_user', user_id=u['id']) }}" method="POST" onsubmit="return confirm('Permanently delete this user?');">
+                                        <button class="btn btn-sm btn-outline-danger border-0"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Issue Reports Table -->
+            <div class="glass-panel" style="min-height: 250px;">
+                <h6 class="text-danger fw-bold text-uppercase mb-3"><i class="fas fa-flag me-2"></i>Issue Reports</h6>
+                <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                    <table class="table text-white mb-0" style="--bs-table-bg: transparent;">
+                        <thead><tr><th>Question</th><th>Reporter</th><th>Reason</th><th class="text-end">Dismiss</th></tr></thead>
+                        <tbody>
+                            {% for r in reports %}
+                            <tr class="align-middle border-bottom border-white border-opacity-10">
+                                <td class="text-white small">{{ r['question_text'] }}</td>
+                                <td class="text-white-50 small">{{ r['reporter'] }}</td>
+                                <td class="text-warning small">{{ r['reason'] }}</td>
+                                <td class="text-end">
+                                    <!-- Edit Trigger Button (calls JavaScript below) -->
+                                    <button class="btn btn-sm btn-outline-warning border-0 me-1 edit-btn"
+                                        data-qid="{{ r['qid'] }}"
+                                        data-rid="{{ r['id'] }}"
+                                        data-question="{{ r['question_text'] }}"
+                                        data-opta="{{ r['option_a'] }}"
+                                        data-optb="{{ r['option_b'] }}"
+                                        data-optc="{{ r['option_c'] }}"
+                                        data-optd="{{ r['option_d'] }}"
+                                        data-correct="{{ r['correct_option'] }}"
+                                        data-cat="{{ r['category'] }}"
+                                        data-diff="{{ r['difficulty'] }}"
+                                        data-exp="{{ r['explanation'] }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <!-- Delete/Dismiss Report Button -->
+                                    <form action="{{ url_for('delete_report', rid=r['id']) }}" method="POST" class="d-inline">
+                                        <button class="btn btn-sm btn-outline-success border-0"><i class="fas fa-check"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-white-50 py-3">No pending reports.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- DANGER ZONE -->
+    <div class="col-12 mt-4">
+        <div class="glass-panel border border-danger border-opacity-25">
+            <h6 class="text-danger fw-bold text-uppercase mb-3"><i class="fas fa-exclamation-triangle me-2"></i>Danger Zone</h6>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="text-white mb-1">Global Mastery Reset</h5>
+                    <p class="text-white-50 small mb-0">This will wipe <strong>ALL</strong> user progress, results, streaks, and flashcard history. This action cannot be undone.</p>
+                </div>
+                <form action="{{ url_for('reset_mastery') }}" method="POST" onsubmit="return confirm('⚠️ ARE YOU SURE?\n\nThis will delete ALL user history and progress for everyone.\nType OK to confirm.');">
+                    <button class="btn btn-outline-danger fw-bold px-4">
+                        <i class="fas fa-bomb me-2"></i>Reset Everything
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT QUESTION MODAL (Hidden by default) -->
+<div class="modal fade" id="editQuestionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content glass-panel p-0">
+            <div class="modal-header border-bottom border-white border-opacity-10">
+                <h5 class="modal-title text-white">Quick Fix Question</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editForm" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="report_id" id="editReportId">
+                    <div class="mb-3">
+                        <label class="text-white-50 small">Question</label>
+                        <input type="text" name="question" id="editQuestion" class="form-control bg-transparent text-white" required>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6"><input type="text" name="option_a" id="editOptA" class="form-control bg-transparent text-white" required></div>
+                        <div class="col-6"><input type="text" name="option_b" id="editOptB" class="form-control bg-transparent text-white" required></div>
+                        <div class="col-6"><input type="text" name="option_c" id="editOptC" class="form-control bg-transparent text-white" required></div>
+                        <div class="col-6"><input type="text" name="option_d" id="editOptD" class="form-control bg-transparent text-white" required></div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <select name="correct" id="editCorrect" class="form-select bg-transparent text-white">
+                                <option value="A" class="text-dark">Correct: A</option>
+                                <option value="B" class="text-dark">Correct: B</option>
+                                <option value="C" class="text-dark">Correct: C</option>
+                                <option value="D" class="text-dark">Correct: D</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <select name="difficulty" id="editDiff" class="form-select bg-transparent text-white">
+                                <option value="Easy" class="text-dark">Diff: Easy</option>
+                                <option value="Medium" class="text-dark">Diff: Medium</option>
+                                <option value="Hard" class="text-dark">Diff: Hard</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <input type="text" name="category" id="editCat" class="form-control bg-transparent text-white" required>
+                    </div>
+                    <div class="mb-3">
+                        <textarea name="explanation" id="editExp" class="form-control bg-transparent text-white" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-white border-opacity-10">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning fw-bold">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT SCRIPT -->
+<script>
+    /**
+     * This script handles the "Edit" button in the reports table.
+     * When clicked, it takes the data from the 'data-' attributes 
+     * of the button and fills them into the Modal form.
+     */
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const d = this.dataset;
+            // Set form action to target specific question ID
+            document.getElementById('editForm').action = `/edit_question/${d.qid}`;
+            // Fill form fields
+            document.getElementById('editReportId').value = d.rid;
+            document.getElementById('editQuestion').value = d.question;
+            document.getElementById('editOptA').value = d.opta;
+            document.getElementById('editOptB').value = d.optb;
+            document.getElementById('editOptC').value = d.optc;
+            document.getElementById('editOptD').value = d.optd;
+            document.getElementById('editCorrect').value = d.correct;
+            document.getElementById('editDiff').value = d.diff;
+            document.getElementById('editCat').value = d.cat;
+            document.getElementById('editExp').value = d.exp;
+            
+            // Show the Modal
+            new bootstrap.Modal(document.getElementById('editQuestionModal')).show();
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,360 @@
+{# 
+    QUIZ ENGINE
+    -----------
+    This is the core of BrainBrew. It handles normal quizzes, battle mode, 
+    and tutor mode using dynamic templates and JavaScript logic.
+
+    Key Features for Beginners:
+    1. Dynamic Timer: A JavaScript interval that counts down and auto-submits 
+       the form when time reaches zero.
+    2. Power-ups (Battle Mode): Includes a '50/50' lifeline that hides two 
+       incorrect options using CSS/JS.
+    3. Bookmarks & Reports: Users can save questions or report errors via 
+       AJAX (without reloading the page).
+    4. Tutor Mode: Shows questions one-by-one with instant feedback and 
+       explanations.
+    5. Form Handling: All answers are sent as a POST request to '/submit_quiz'.
+#}
+
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        
+        <!-- HEADER: Session Title and Timer -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-white mb-0">
+                    {% if battle_id %}
+                        <span class="text-warning"><i class="fas fa-bolt me-2"></i>Battle Mode</span>
+                    {% else %}
+                        {{ title if title else 'Quiz Session' }}
+                    {% endif %}
+                </h2>
+                <p class="text-white-50 small mb-0">{% if tutor_mode %}One question at a time. Instant feedback.{% else %}Focus. Accuracy is key.{% endif %}</p>
+            </div>
+            
+            <!-- TIMER BOX -->
+            <div class="glass-panel py-2 px-4 d-flex align-items-center gap-3">
+                <i class="fas fa-stopwatch text-warning fa-lg"></i>
+                <span id="timer" class="fw-bold text-white fs-4" style="font-family: monospace;">00:00</span>
+            </div>
+        </div>
+
+        <!-- MAIN QUIZ FORM -->
+        <form action="{{ url_for('submit_quiz') }}" method="POST" id="quizForm">
+            
+            <!-- Hidden field to tell the server if this is a Battle -->
+            {% if battle_id %}
+                <input type="hidden" name="battle_id" value="{{ battle_id }}">
+            {% endif %}
+            
+            <!-- LOOP THROUGH QUESTIONS -->
+            {% for q in questions %}
+            {% set correct_text_full = q.correct_option %}
+            {% if q.correct_option in ['A', 'B', 'C', 'D'] %}
+                {% if q.correct_option == 'A' %}{% set correct_text_full = q.option_a %}{% endif %}
+                {% if q.correct_option == 'B' %}{% set correct_text_full = q.option_b %}{% endif %}
+                {% if q.correct_option == 'C' %}{% set correct_text_full = q.option_c %}{% endif %}
+                {% if q.correct_option == 'D' %}{% set correct_text_full = q.option_d %}{% endif %}
+            {% endif %}
+
+            <!-- Question Card -->
+            <div class="glass-panel p-4 mb-4 position-relative question-card" 
+                 data-qid="{{ q.id }}" 
+                 data-correct-letter="{{ q.correct_option }}" 
+                 data-correct-text="{{ correct_text_full|e }}" 
+                 data-explanation="{{ (q.explanation or '')|replace('\n',' ')|e }}">
+                
+                <!-- Question Number Tag -->
+                <span class="position-absolute top-0 start-0 m-3 badge bg-white bg-opacity-10 text-white-50 border border-white border-opacity-10">
+                    Q{{ loop.index }}
+                </span>
+
+                <!-- Action Buttons (Lifeline, Bookmark, Report) -->
+                <div class="position-absolute top-0 end-0 m-3 d-flex gap-2">
+                    {% if battle_id %}
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-warning rounded-pill px-3 lifeline-btn" 
+                            onclick="useLifeline(this, '{{ q.correct_option }}', '{{ q.id }}')"
+                            title="Remove 2 Wrong Answers (1 Use per Battle)">
+                        <i class="fas fa-magic me-1"></i> 50/50
+                    </button>
+                    {% endif %}
+                    
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-light rounded-circle p-0 d-flex align-items-center justify-content-center" 
+                            style="width: 32px; height: 32px; backdrop-filter: blur(5px);"
+                            onclick="toggleBookmark(this, '{{ q.id }}')"
+                            title="Save Question">
+                        <i class="fas fa-star {{ 'text-warning' if user_bookmarks and q.id in user_bookmarks else 'text-white-50' }}"></i>
+                    </button>
+                    
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-danger rounded-circle p-0 d-flex align-items-center justify-content-center" 
+                            style="width: 32px; height: 32px; backdrop-filter: blur(5px);"
+                            onclick="openReportModal('{{ q.id }}')"
+                            title="Report Issue">
+                        <i class="fas fa-flag"></i>
+                    </button>
+                </div>
+                
+                <!-- Question Text -->
+                <h5 class="text-white fw-bold mt-5 mb-4 ps-1" style="line-height: 1.6;">
+                    {{ q.question_text }}
+                </h5>
+
+                <!-- Optional Image -->
+                {% if q.image_file and q.image_file != 'None' %}
+                <div class="text-center my-3">
+                    <img src="{{ url_for('static', filename='uploads/' + q.image_file) }}" 
+                         alt="Question Image" 
+                         class="img-fluid rounded shadow-sm" 
+                         style="max-height: 300px; max-width: 100%; border: 1px solid rgba(255,255,255,0.2);">
+                </div>
+                {% endif %}
+
+                <!-- Options A, B, C, D -->
+                <div class="row g-3">
+                    {% set options = [
+                        ('A', q.option_a), 
+                        ('B', q.option_b), 
+                        ('C', q.option_c), 
+                        ('D', q.option_d)
+                    ] %}
+                    
+                    {% for key, val in options %}
+                    <div class="col-md-6">
+                        <input type="radio" class="btn-check" name="{{ q.id }}" id="q{{ q.id }}_{{ key }}" value="{{ val }}">
+                        <label class="btn btn-outline-light w-100 text-start py-3 px-3 border-opacity-25 d-flex align-items-center gap-3 option-card" 
+                               for="q{{ q.id }}_{{ key }}">
+                            <span class="badge bg-white bg-opacity-10 rounded-circle text-white" style="width: 28px; height: 28px; display: grid; place-items: center;">
+                                {{ key }}
+                            </span>
+                            <span class="text-break">{{ val }}</span>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- TUTOR MODE CONTROLS (Only visible in tutor mode) -->
+            {% if tutor_mode %}
+            <div class="glass-panel p-4 mb-4" id="tutorControls">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="text-white-50 fw-bold" id="tutorProgress">Question 1 / {{ questions|length }}</div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-light rounded-pill px-4" style="border-color: var(--glass-border);" id="tutorPrev">Prev</button>
+                        <button type="button" class="btn btn-primary rounded-pill px-4" id="tutorNext">Next</button>
+                    </div>
+                </div>
+                <!-- Feedback Box (Shows correct answer + explanation) -->
+                <div class="mt-3 p-3 rounded" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08);" id="tutorFeedbackBox">
+                    <div class="fw-bold text-white" id="tutorFeedbackTitle">Pick an answer to see feedback</div>
+                    <div class="text-white-50 mt-1" id="tutorFeedbackAnswer"></div>
+                    <div class="text-white-50 mt-2" id="tutorFeedbackExplanation"></div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Submit Button -->
+            <div class="text-end mb-5">
+                <button type="submit" class="btn btn-lg fw-bold text-white px-5 shadow-lg" 
+                        style="background: linear-gradient(45deg, #10b981, #3b82f6); border: none;">
+                    <i class="fas fa-paper-plane me-2"></i>Submit Answers
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<!-- REPORT MODAL (Pop-up for reporting errors) -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-panel p-0">
+            <div class="modal-header border-bottom border-white border-opacity-10">
+                <h5 class="modal-title text-white">Report Question</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-white-50 small mb-3">Flagging this question will notify the admin to review it.</p>
+                <input type="hidden" id="reportQid">
+                <button class="btn btn-outline-warning w-100 mb-2" onclick="submitReport('Spelling Mistake')">Spelling Mistake</button>
+                <button class="btn btn-outline-warning w-100 mb-2" onclick="submitReport('Wrong Answer')">Wrong Answer</button>
+                <button class="btn btn-outline-warning w-100" onclick="submitReport('Confusing/Unclear')">Confusing/Unclear</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QUIZ LOGIC SCRIPTS -->
+<script>
+    // 1. TIMER LOGIC
+    let timeLeft = {{ time_limit|default(60) }};
+    const timerElement = document.getElementById('timer');
+    
+    // Audio assets for UI feedback
+    const selectSound = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3");
+    const submitSound = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3");
+    selectSound.volume = 0.2;
+    submitSound.volume = 0.3;
+
+    // Play sound when user clicks an option
+    document.querySelectorAll('.btn-check').forEach(input => {
+        input.addEventListener('change', () => {
+            selectSound.currentTime = 0;
+            selectSound.play().catch(() => {});
+        });
+    });
+
+    // Handle the countdown
+    if (timeLeft > 0) {
+        updateDisplay(timeLeft);
+        const countdown = setInterval(() => {
+            timeLeft--;
+            updateDisplay(timeLeft);
+
+            // Red Alert UI for last 10 seconds
+            if (timeLeft <= 10) {
+                timerElement.classList.remove('text-white');
+                timerElement.classList.add('text-danger');
+                timerElement.style.textShadow = "0 0 10px red";
+            }
+
+            // Auto-submit when time is up
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                document.querySelector('button[type="submit"]').disabled = true;
+                document.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Time Up!';
+                document.getElementById('quizForm').submit();
+            }
+        }, 1000);
+    } else {
+        timerElement.innerHTML = "<i class='fas fa-infinity'></i>";
+    }
+
+    function updateDisplay(seconds) {
+        const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const secs = (seconds % 60).toString().padStart(2, '0');
+        timerElement.textContent = `${mins}:${secs}`;
+    }
+
+    // 2. BATTLE POWER-UP: 50/50 LIFELINE
+    let lifelineUsed = false;
+    function useLifeline(btn, correctOption, qId) {
+        if (lifelineUsed) return;
+        
+        const magicSound = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-fairy-arcade-sparkle-866.mp3"); 
+        magicSound.play().catch(()=>{});
+
+        const options = ['A', 'B', 'C', 'D'];
+        const wrongOptions = options.filter(opt => opt !== correctOption);
+        
+        // Pick 2 random wrong options to hide
+        wrongOptions.sort(() => Math.random() - 0.5);
+        const toHide = wrongOptions.slice(0, 2);
+        
+        toHide.forEach(opt => {
+            const inputId = `q${qId}_${opt}`;
+            const label = document.querySelector(`label[for="${inputId}"]`);
+            if (label) {
+                label.style.opacity = "0.2";
+                label.style.pointerEvents = "none";
+                document.getElementById(inputId).disabled = true;
+            }
+        });
+
+        lifelineUsed = true;
+        document.querySelectorAll('.lifeline-btn').forEach(b => {
+            b.disabled = true;
+            b.innerHTML = '<i class="fas fa-check"></i> Used';
+        });
+    }
+
+    // 3. BOOKMARK & REPORT (AJAX)
+    function toggleBookmark(btn, qId) {
+        const icon = btn.querySelector('i');
+        icon.classList.toggle('text-white-50');
+        icon.classList.toggle('text-warning');
+
+        fetch('/toggle_bookmark', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({question_id: qId})
+        });
+    }
+
+    function openReportModal(qid) {
+        document.getElementById('reportQid').value = qid;
+        new bootstrap.Modal(document.getElementById('reportModal')).show();
+    }
+
+    function submitReport(reason) {
+        const qid = document.getElementById('reportQid').value;
+        fetch(`/report_question/${qid}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ reason: reason })
+        })
+        .then(() => {
+            bootstrap.Modal.getInstance(document.getElementById('reportModal')).hide();
+            alert("Report sent. Thank you!");
+        });
+    }
+
+    // 4. TUTOR MODE LOGIC (One question at a time)
+    const tutorMode = {{ 'true' if tutor_mode else 'false' }};
+    if (tutorMode) {
+        const questionCards = Array.from(document.querySelectorAll('.question-card'));
+        const submitBtn = document.querySelector('button[type="submit"]');
+        let currentTutorIndex = 0;
+
+        function showTutorCard(idx) {
+            questionCards.forEach((c, i) => c.style.display = i === idx ? '' : 'none');
+            document.getElementById('tutorProgress').textContent = `Question ${idx + 1} / ${questionCards.length}`;
+            document.getElementById('tutorNext').style.display = idx === questionCards.length - 1 ? 'none' : '';
+            submitBtn.style.display = idx === questionCards.length - 1 ? '' : 'none';
+        }
+
+        document.getElementById('tutorNext').addEventListener('click', () => {
+            const card = questionCards[currentTutorIndex];
+            if (!card.querySelector('input:checked')) {
+                alert("Please select an answer first!");
+                return;
+            }
+            currentTutorIndex++;
+            showTutorCard(currentTutorIndex);
+        });
+
+        // Instant Feedback in Tutor Mode
+        document.getElementById('quizForm').addEventListener('change', (e) => {
+            if (!tutorMode) return;
+            const card = questionCards[currentTutorIndex];
+            const checked = card.querySelector('input:checked');
+            if (!checked) return;
+
+            const selected = checked.id.split('_').pop();
+            const correct = card.dataset.correctLetter;
+            const isCorrect = selected === correct;
+
+            document.getElementById('tutorFeedbackTitle').textContent = isCorrect ? '✅ Correct!' : '❌ Not quite...';
+            document.getElementById('tutorFeedbackAnswer').textContent = `Correct Answer: ${correct} — ${card.dataset.correctText}`;
+            document.getElementById('tutorFeedbackExplanation').textContent = card.dataset.explanation;
+        });
+
+        showTutorCard(0);
+    }
+</script>
+
+<style>
+    .option-card:hover { background: rgba(255, 255, 255, 0.1) !important; transform: translateY(-2px); }
+    .btn-check:checked + .option-card {
+        background: rgba(139, 92, 246, 0.3) !important;
+        border-color: #8b5cf6 !important;
+        box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+    }
+</style>
+{% endblock %}

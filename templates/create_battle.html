@@ -1,0 +1,299 @@
+{# 
+    CREATE BATTLE PAGE
+    ------------------
+    This page serves as the entry point for Battle Mode (Multiplayer). 
+    It offers two paths:
+    1. HOST DUEL: Configure a new game session with specific settings.
+    2. JOIN FIGHT: Enter an existing session using a 6-character code.
+
+    Key Features for Beginners:
+    1. Dual-Path Layout: Uses a split-screen design to separate "Hosting" 
+       from "Joining" logic.
+    2. Custom Form Elements: 
+       - Category Select: Pulls dynamic categories from the database.
+       - Time Limit Radios: Uses hidden radio buttons with stylized labels.
+       - Match Length Slider: A range input that updates a label in real-time.
+    3. Visual Identity: Uses unique color schemes for each path 
+       (Indigo for Host, Pink for Join) with glowing border effects.
+    4. Responsiveness: Automatically stacks vertically on mobile devices.
+#}
+
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Google Fonts for branding and readability -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --primary-glow: #6366f1;
+        --secondary-glow: #ec4899;
+        --glass-bg: rgba(255, 255, 255, 0.03);
+        --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    body {
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .battle-container {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    /* Container for the two split cards */
+    .split-wrapper {
+        display: flex;
+        width: 100%;
+        max-width: 1100px;
+        gap: 30px;
+        align-items: stretch; /* Ensures both cards are same height */
+    }
+
+    /* CARD BASE STYLES - Shared properties for both Host and Join cards */
+    .battle-card {
+        flex: 1;
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        padding: 40px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .battle-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Hover Glow Effects */
+    .battle-card.host:hover { box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15); }
+    .battle-card.join:hover { box-shadow: 0 20px 40px rgba(236, 72, 153, 0.15); }
+
+    h2 {
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        letter-spacing: 2px;
+        margin-bottom: 10px;
+    }
+
+    .sub-text {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.9rem;
+        margin-bottom: 30px;
+    }
+
+    /* --- FORM ELEMENTS (LEFT SIDE) --- */
+    .form-label-custom {
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.4);
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .custom-select {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--glass-border);
+        color: white;
+        padding: 12px 16px;
+        border-radius: 12px;
+        width: 100%;
+        cursor: pointer;
+    }
+    .custom-select:focus { outline: none; border-color: var(--primary-glow); }
+
+    /* Time Selector Logic: Stylized radio buttons */
+    .time-selector { display: flex; gap: 10px; width: 100%; }
+    .btn-check { position: absolute; clip: rect(0,0,0,0); pointer-events: none; }
+    
+    .time-label {
+        width: 100%; height: 100%;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: 0.3s;
+        color: rgba(255, 255, 255, 0.7);
+        padding: 15px 0;
+    }
+    
+    /* Highlight the selected time option */
+    .btn-check:checked + .time-label {
+        background: var(--primary-glow);
+        border-color: var(--primary-glow);
+        color: white;
+        box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+    }
+
+    input[type=range] { width: 100%; accent-color: var(--primary-glow); cursor: pointer; }
+
+    /* --- JOIN INPUT (RIGHT SIDE) --- */
+    .join-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center; 
+        align-items: center;
+        gap: 20px;
+        width: 100%;
+    }
+
+    .code-input-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    .code-input {
+        background: rgba(0, 0, 0, 0.4);
+        border: 2px solid var(--glass-border);
+        color: white;
+        font-size: 2.5rem; 
+        text-align: center;
+        letter-spacing: 8px;
+        text-transform: uppercase;
+        border-radius: 16px;
+        padding: 25px;
+        width: 100%;
+        font-family: 'Orbitron', sans-serif;
+        transition: 0.3s all;
+    }
+
+    .code-input:focus {
+        outline: none;
+        border-color: var(--secondary-glow);
+        box-shadow: 0 0 30px rgba(236, 72, 153, 0.25);
+        transform: scale(1.02);
+    }
+
+    .code-input::placeholder {
+        color: rgba(255, 255, 255, 0.1);
+        font-size: 2rem;
+    }
+
+    /* --- BUTTON STYLES --- */
+    .btn-hero {
+        width: 100%;
+        padding: 18px;
+        border-radius: 50px;
+        border: none;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: 0.3s;
+        color: white;
+        margin-top: auto;
+    }
+
+    .btn-host { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+    .btn-host:hover { box-shadow: 0 0 25px rgba(99, 102, 241, 0.5); }
+
+    .btn-join { background: linear-gradient(135deg, #ec4899, #db2777); width: 100%; }
+    .btn-join:hover { box-shadow: 0 0 25px rgba(236, 72, 153, 0.5); }
+
+    /* Mobile responsive stacking */
+    @media (max-width: 768px) {
+        .split-wrapper { flex-direction: column; }
+    }
+</style>
+
+<div class="container battle-container fade-in">
+    <div class="split-wrapper">
+
+        <!-- HOST CARD (Left Side) -->
+        <div class="battle-card host">
+            <div class="text-center">
+                <i class="fas fa-meteor fa-3x mb-3" style="color: #6366f1; text-shadow: 0 0 15px rgba(99, 102, 241, 0.6);"></i>
+                <h2 class="text-white">HOST DUEL</h2>
+                <p class="sub-text">Create a lobby and invite a friend.</p>
+            </div>
+
+            <form action="{{ url_for('create_battle') }}" method="POST" style="flex: 1; display: flex; flex-direction: column;">
+                
+                <!-- Topic Selection -->
+                <div class="mb-4">
+                    <label class="form-label-custom">Battlefield (Topic)</label>
+                    <select name="category" class="custom-select">
+                        <option value="All">🎲 Random Mix</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.category }}">{{ cat.category }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Time Limit Selection -->
+                <div class="mb-4">
+                    <label class="form-label-custom">Time Limit</label>
+                    <div class="time-selector">
+                        <div style="flex: 1; position: relative;">
+                            <input type="radio" class="btn-check" name="time_limit" id="t60" value="60">
+                            <label class="time-label" for="t60">1m<br><small style="opacity: 0.6;">Blitz</small></label>
+                        </div>
+                        <div style="flex: 1; position: relative;">
+                            <input type="radio" class="btn-check" name="time_limit" id="t180" value="180" checked>
+                            <label class="time-label" for="t180">3m<br><small style="opacity: 0.6;">Normal</small></label>
+                        </div>
+                        <div style="flex: 1; position: relative;">
+                            <input type="radio" class="btn-check" name="time_limit" id="t300" value="300">
+                            <label class="time-label" for="t300">5m<br><small style="opacity: 0.6;">Long</small></label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Match Length Slider -->
+                <div class="mb-5">
+                    <div class="d-flex justify-content-between">
+                        <label class="form-label-custom">Match Length</label>
+                        <span id="qVal" class="text-white fw-bold">5 Rounds</span>
+                    </div>
+                    <input type="range" name="num_questions" min="3" max="15" value="5"
+                           oninput="document.getElementById('qVal').innerText = this.value + ' Rounds'">
+                </div>
+
+                <button type="submit" class="btn-hero btn-host">
+                    <i class="fas fa-plus-circle me-2"></i> Create Lobby
+                </button>
+            </form>
+        </div>
+
+        <!-- JOIN CARD (Right Side) -->
+        <div class="battle-card join">
+            <div class="text-center">
+                <i class="fas fa-gamepad fa-3x mb-3" style="color: #ec4899; text-shadow: 0 0 15px rgba(236, 72, 153, 0.6);"></i>
+                <h2 class="text-white">JOIN FIGHT</h2>
+                <p class="sub-text">Have a code? Enter it below.</p>
+            </div>
+
+            <form action="{{ url_for('join_battle_manual') }}" method="POST" class="join-content">
+                
+                <!-- Code Input Box -->
+                <div class="code-input-wrapper">
+                    <input type="text" name="battle_code" class="code-input" placeholder="CODE" maxlength="6" autocomplete="off" required>
+                </div>
+
+                <div class="text-center opacity-50">
+                    <small><i class="fas fa-info-circle me-1"></i> Ask your friend for the 6-digit code.</small>
+                </div>
+
+                <button type="submit" class="btn-hero btn-join">
+                    <i class="fas fa-sign-in-alt me-2"></i> Enter Arena
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

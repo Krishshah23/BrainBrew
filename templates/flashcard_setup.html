@@ -1,0 +1,100 @@
+{# 
+    FLASHCARD SETUP PAGE
+    --------------------
+    This page lets users configure their study session. They can 
+    pick a topic, set the number of cards, and choose between 
+    "Smart Review" (prioritizing weak cards) or "New Cards".
+
+    Key Features for Beginners:
+    1. Mastery Stats: Shows how many cards the user has already 
+       "Mastered" vs the total cards available.
+    2. Dynamic Decks: Uses a loop to list all categories from the database.
+    3. Dual Modes:
+       - Zen Flashcards: A standard reveal-and-rate interface.
+       - Tutor Mode: One question at a time with immediate feedback.
+    4. formaction Attribute: Notice the "Tutor Mode" button uses 
+       'formaction'. This tells the form to submit to a different 
+       URL than the main form action.
+#}
+
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        
+        <!-- SETUP CONTAINER -->
+        <div class="glass-panel text-center position-relative overflow-hidden mb-4">
+            <!-- Decorative Icon -->
+            <i class="fas fa-layer-group position-absolute text-white" style="opacity: 0.05; font-size: 15rem; top: 50%; left: 50%; transform: translate(-50%, -50%);"></i>
+            
+            <div class="mb-4">
+                <i class="fas fa-infinity fa-4x text-white mb-3" style="text-shadow: 0 0 20px var(--primary-accent);"></i>
+                <h2 class="fw-bold text-white">Study Lab</h2>
+                <p class="text-white-50">Choose a learning style that fits your goal.</p>
+            </div>
+
+            <!-- MASTERY PROGRESS SUMMARY -->
+            <div class="d-flex justify-content-center gap-4 mb-4 text-white">
+                <div>
+                    <h3 class="fw-bold mb-0 text-success">{{ mastered }}</h3>
+                    <small class="text-white-50">MASTERED</small>
+                </div>
+                <div class="border-start border-white border-opacity-10"></div>
+                <div>
+                    <h3 class="fw-bold mb-0 text-white">{{ total }}</h3>
+                    <small class="text-white-50">TOTAL CARDS</small>
+                </div>
+            </div>
+
+            <!-- SETUP FORM -->
+            <form action="{{ url_for('study_mode') }}" method="POST">
+                <!-- Deck Selection -->
+                <div class="mb-4 text-start">
+                    <label class="text-white-50 small fw-bold mb-2">SELECT DECK</label>
+                    <select name="category" class="form-select">
+                        <option value="All">📚 Mixed Deck (All Topics)</option>
+                        {% for c in categories %}
+                        <option value="{{ c[0] }}">{{ c[0] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <!-- Session Size Selection -->
+                    <div class="col-md-6 text-start">
+                        <label class="text-white-50 small fw-bold mb-2">SESSION SIZE</label>
+                        <select name="session_size" class="form-select">
+                            <option value="10">10 Cards (Quick)</option>
+                            <option value="20" selected>20 Cards (Standard)</option>
+                            <option value="30">30 Cards (Focused)</option>
+                            <option value="50">50 Cards (Deep)</option>
+                        </select>
+                    </div>
+                    <!-- Study Mode Selection -->
+                    <div class="col-md-6 text-start">
+                        <label class="text-white-50 small fw-bold mb-2">STUDY MODE</label>
+                        <select name="mode" class="form-select">
+                            <option value="smart" selected>Smart (Review First)</option>
+                            <option value="new">New Cards Only</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="d-grid gap-3">
+                    <!-- Standard Flashcards -->
+                    <button type="submit" class="btn btn-glow w-100 py-3 fs-5">
+                        Zen Flashcards
+                    </button>
+                    <!-- Alternative: Tutor Mode -->
+                    <button type="submit" class="btn btn-outline-light w-100 py-3 fs-5" style="border-color: var(--glass-border);" formaction="{{ url_for('tutor_mode') }}">
+                        Tutor Mode (Instant Feedback)
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

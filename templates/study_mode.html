@@ -1,0 +1,330 @@
+{# 
+    STUDY MODE (ZEN FLASHCARDS)
+    ---------------------------
+    This is the core flashcard interface where users can review questions
+    in a "reveal-and-rate" style. It uses the Anki-style Spaced Repetition 
+    logic (Again, Hard, Good, Easy).
+
+    How it works for Beginners:
+    1. Deck Loading: The 'cards' data is passed from Python as a list of lists 
+       and converted to a JavaScript array (deck).
+    2. The Reveal: Answers are hidden behind a blurred 'revealOverlay'. 
+       Clicking or pressing Space reveals the answer.
+    3. The Feedback: After seeing the answer, users rate their confidence. 
+       - 'Again' or 'Hard' puts the card back into the current session's queue.
+       - 'Mastered' (Easy) sends a request to the backend to mark it as mastered.
+    4. Progress Tracking: The top bar updates in real-time as you go through the cards.
+    5. AJAX Calls: We use 'fetch()' to talk to the server (mark_card, toggle_bookmark) 
+       without refreshing the entire page.
+#}
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container d-flex flex-column align-items-center justify-content-center fade-in" style="min-height: 80vh;">
+    
+    <!-- HEADER BAR: Navigation and Progress -->
+    <div class="w-100 mw-800 mb-4 d-flex align-items-center justify-content-between gap-3" style="max-width: 700px;">
+        <!-- Exit Button: Returns to setup -->
+        <a href="{{ url_for('flashcard_setup') }}" class="btn btn-sm btn-outline-light rounded-pill px-3" style="border-color: var(--glass-border); color: var(--text-muted);">
+            <i class="fas fa-times me-2"></i>Exit
+        </a>
+        
+        <!-- Statistics Badges (Hidden on small mobile screens) -->
+        <div class="d-none d-md-flex align-items-center gap-2">
+            <span class="badge bg-white bg-opacity-10 text-white border border-white border-opacity-10" id="masteredCount">0 Mastered</span>
+            <span class="badge bg-white bg-opacity-10 text-white-50 border border-white border-opacity-10" id="queueCount">Queue: 0</span>
+            <!-- Bookmark Button: Toggles if the question is saved for later -->
+            <button class="btn btn-sm btn-outline-light rounded-pill px-3" style="border-color: var(--glass-border); color: var(--text-muted);" onclick="toggleBookmarkCurrent()" type="button" id="bookmarkBtn">
+                <i class="fas fa-bookmark"></i>
+            </button>
+        </div>
+
+        <!-- Progress Bar: Visual indicator of how much is left in the session -->
+        <div class="flex-grow-1 mx-3">
+            <div class="d-flex justify-content-between text-muted small fw-bold mb-1">
+                <span>SESSION PROGRESS</span>
+                <span id="progressText">0 reviewed • Queue: {{ cards|length }}</span>
+            </div>
+            <div class="progress" style="height: 6px; background: var(--glass-border); border-radius: 10px;">
+                <div id="progressBar" class="progress-bar bg-primary" role="progressbar" style="width: 0%; transition: width 0.3s ease;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CARD CONTAINER -->
+    <div class="glass-panel p-0 d-flex flex-column overflow-hidden shadow-lg" style="width: 100%; max-width: 700px; min-height: 450px; position: relative;">
+        
+        <!-- QUESTION SECTION (Top half) -->
+        <div class="p-5 d-flex flex-column justify-content-center align-items-center text-center border-bottom border-light border-opacity-10" style="flex: 1; background: rgba(0,0,0,0.2);">
+            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 mb-3" id="cardCategory">Category</span>
+            <h2 class="fw-bold mb-0" id="cardQuestion" style="color: var(--text-main); line-height: 1.5;">
+                Loading...
+            </h2>
+            <div class="text-white-50 small mt-4" id="cardMeta"></div>
+        </div>
+
+        <!-- ANSWER SECTION (Bottom half) -->
+        <div id="answerSection" class="p-5 d-flex flex-column justify-content-center align-items-center text-center position-relative" style="flex: 1; transition: 0.3s;">
+            
+            <!-- The Answer (Initially blurred) -->
+            <div id="blurMask" class="w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="transition: 0.5s;">
+                <h3 class="fw-bold text-success mb-3" id="cardAnswer">Answer Here</h3>
+                <p class="text-muted small fst-italic" id="cardExplanation">Explanation here...</p>
+            </div>
+
+            <!-- The Reveal Overlay (The "Tap to Reveal" curtain) -->
+            <div id="revealOverlay" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" 
+                 style="background: var(--glass-bg); backdrop-filter: blur(15px); cursor: pointer; z-index: 10;">
+                <i class="fas fa-eye fa-2x text-muted mb-2"></i>
+                <span class="small fw-bold text-muted tracking-wider">TAP TO REVEAL</span>
+            </div>
+
+            <!-- Confidence Rating Buttons (Appear after reveal) -->
+            <div id="decisionButtons" class="d-flex flex-wrap gap-2 mt-4 w-100 opacity-0" style="pointer-events: none; transition: 0.3s;">
+                <button onclick="handleResult('again')" class="btn btn-outline-danger flex-grow-1 py-3 fw-bold rounded-pill" style="min-width: 140px;">
+                    1 • Again
+                </button>
+                <button onclick="handleResult('hard')" class="btn btn-outline-warning flex-grow-1 py-3 fw-bold rounded-pill" style="min-width: 140px;">
+                    2 • Hard
+                </button>
+                <button onclick="handleResult('learning')" class="btn btn-outline-light flex-grow-1 py-3 fw-bold rounded-pill" style="min-width: 140px;">
+                    3 • Good
+                </button>
+                <button onclick="handleResult('mastered')" class="btn btn-outline-success flex-grow-1 py-3 fw-bold rounded-pill" style="min-width: 140px;">
+                    4 • Easy
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Shortcut Legend -->
+    <div class="mt-3 text-muted small opacity-50">
+        Space to Reveal • 1 Again • 2 Hard • 3 Good • 4 Easy
+    </div>
+
+</div>
+
+<script>
+    // DATA INITIALIZATION
+    // 'tojson' is a Jinja2 filter that safely turns Python lists into JS arrays
+    let deck = {{ cards | tojson }};
+    let userBookmarks = new Set({{ (user_bookmarks or []) | tojson }});
+    let currentIndex = 0;
+    let isRevealed = false;
+    let isProcessing = false;
+    let reviewedCount = 0;
+    let masteredInSession = 0;
+    let currentQuestionId = null;
+
+    // DOM ELEMENTS (References to HTML tags)
+    const questionEl = document.getElementById('cardQuestion');
+    const categoryEl = document.getElementById('cardCategory');
+    const answerEl = document.getElementById('cardAnswer');
+    const explanationEl = document.getElementById('cardExplanation');
+    const metaEl = document.getElementById('cardMeta');
+    
+    const revealOverlay = document.getElementById('revealOverlay');
+    const blurMask = document.getElementById('blurMask');
+    const decisionButtons = document.getElementById('decisionButtons');
+    const progressText = document.getElementById('progressText');
+    const progressBar = document.getElementById('progressBar');
+    const masteredCountEl = document.getElementById('masteredCount');
+    const queueCountEl = document.getElementById('queueCount');
+    const bookmarkBtn = document.getElementById('bookmarkBtn');
+
+    // AUDIO EFFECTS
+    const revealSound = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3");
+    const successSound = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3");
+    revealSound.volume = 0.2; successSound.volume = 0.2;
+
+    /**
+     * loadCard(index)
+     * Renders the current card data into the UI.
+     * If the index is out of bounds, it shows the "Session Complete" screen.
+     */
+    function loadCard(index) {
+        if (index >= deck.length) {
+            document.querySelector('.container').innerHTML = `
+                <div class="text-center fade-in p-5 glass-panel">
+                    <i class="fas fa-check-circle fa-5x text-success mb-3"></i>
+                    <h2 class="fw-bold text-white">Session Complete!</h2>
+                    <p class="text-white-50 mb-4">Mastered: ${masteredInSession} • Reviewed: ${reviewedCount}</p>
+                    <a href="{{ url_for('flashcard_setup') }}" class="btn btn-primary mt-3 px-5 rounded-pill">Finish</a>
+                </div>`;
+            return;
+        }
+
+        const data = deck[index];
+        isRevealed = false;
+        isProcessing = false;
+        currentQuestionId = data[0];
+
+        // Populate Text Content
+        questionEl.innerText = data[1];
+        categoryEl.innerText = data[7];
+        metaEl.innerText = data[8] ? `Difficulty: ${data[8]}` : '';
+        
+        // Find the correct answer text based on the letter (A, B, C, or D)
+        const correctLetter = data[6];
+        let correctText = (correctLetter === 'A') ? data[2] : (correctLetter === 'B') ? data[3] : (correctLetter === 'C') ? data[4] : data[5];
+        answerEl.innerText = correctText;
+        explanationEl.innerText = data[10] || "No explanation provided.";
+
+        // RESET UI STATE (Cover the answer again)
+        revealOverlay.style.opacity = "1";
+        revealOverlay.style.pointerEvents = "auto";
+        blurMask.style.filter = "blur(8px)";
+        decisionButtons.style.opacity = "0";
+        decisionButtons.style.pointerEvents = "none";
+        
+        updateTopStats();
+    }
+
+    /**
+     * updateTopStats()
+     * Updates the progress bar and counter badges at the top of the screen.
+     */
+    function updateTopStats() {
+        const remaining = Math.max(deck.length - currentIndex, 0);
+        progressText.innerText = `${reviewedCount} reviewed • Queue: ${remaining}`;
+        const pct = remaining + reviewedCount > 0 ? (reviewedCount / (remaining + reviewedCount)) * 100 : 0;
+        progressBar.style.width = `${pct}%`;
+        if (masteredCountEl) masteredCountEl.innerText = `${masteredInSession} Mastered`;
+        if (queueCountEl) queueCountEl.innerText = `Queue: ${remaining}`;
+        syncBookmarkButton();
+    }
+
+    /**
+     * syncBookmarkButton()
+     * Updates the visual state of the bookmark icon based on whether 
+     * the current question is saved.
+     */
+    function syncBookmarkButton() {
+        if (!bookmarkBtn || !currentQuestionId) return;
+        const active = userBookmarks.has(currentQuestionId);
+        if (active) {
+            bookmarkBtn.classList.remove('btn-outline-light');
+            bookmarkBtn.classList.add('btn-primary');
+            bookmarkBtn.innerHTML = '<i class="fas fa-bookmark"></i>';
+        } else {
+            bookmarkBtn.classList.remove('btn-primary');
+            bookmarkBtn.classList.add('btn-outline-light');
+            bookmarkBtn.innerHTML = '<i class="far fa-bookmark"></i>';
+        }
+    }
+
+    /**
+     * toggleBookmarkCurrent()
+     * Sends an AJAX request to the server to add/remove the current 
+     * question from the user's bookmarks.
+     */
+    function toggleBookmarkCurrent() {
+        if (!currentQuestionId) return;
+        fetch("{{ url_for('toggle_bookmark') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question_id: currentQuestionId })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data && data.status === 'success') {
+                if (data.action === 'added') userBookmarks.add(currentQuestionId);
+                if (data.action === 'removed') userBookmarks.delete(currentQuestionId);
+                syncBookmarkButton();
+            }
+        })
+        .catch(() => {});
+    }
+
+    /**
+     * revealCard()
+     * Hides the "Tap to Reveal" overlay and reveals the answer.
+     */
+    function revealCard() {
+        if(isRevealed) return;
+        isRevealed = true;
+        revealSound.play().catch(e=>{});
+
+        // Hide Overlay, Unblur Text
+        revealOverlay.style.opacity = "0";
+        revealOverlay.style.pointerEvents = "none";
+        blurMask.style.filter = "none";
+        
+        // Show Decision Buttons
+        setTimeout(() => {
+            decisionButtons.style.opacity = "1";
+            decisionButtons.style.pointerEvents = "auto";
+        }, 100);
+    }
+
+    // Add click listener to the overlay
+    revealOverlay.addEventListener('click', revealCard);
+
+    /**
+     * handleResult(status)
+     * Processes the user's confidence rating.
+     * @param {string} status - 'again', 'hard', 'learning', or 'mastered'
+     */
+    function handleResult(status) {
+        if(isProcessing) return; // Prevent double-clicks
+        isProcessing = true;
+
+        const card = deck[currentIndex];
+        const qid = card ? card[0] : null;
+        reviewedCount++;
+
+        // If 'mastered', increment the session count and play sound
+        if(status === 'mastered') {
+            masteredInSession++;
+            successSound.play().catch(e=>{});
+        }
+
+        // Spaced Repetition Logic: 
+        // If the user struggles ('again' or 'hard'), re-insert the card 
+        // later in the current session's deck.
+        if (status === 'again' || status === 'hard') {
+            const offset = status === 'again' ? 3 : 8;
+            const insertAt = Math.min(currentIndex + offset, deck.length);
+            deck.splice(insertAt, 0, card);
+        }
+
+        // SEND TO BACKEND: Update the database status for this question
+        fetch("{{ url_for('mark_card') }}", {
+            method: "POST",
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ question_id: qid, status: status })
+        });
+
+        // VISUAL FEEDBACK: Shrink and fade the card before loading the next one
+        document.querySelector('.glass-panel').style.transform = "scale(0.98)";
+        document.querySelector('.glass-panel').style.opacity = "0.5";
+
+        setTimeout(() => {
+            currentIndex++;
+            loadCard(currentIndex);
+            document.querySelector('.glass-panel').style.transform = "scale(1)";
+            document.querySelector('.glass-panel').style.opacity = "1";
+        }, 200);
+    }
+
+    // KEYBOARD SUPPORT: Allow users to use space and numbers for faster study
+    document.addEventListener('keydown', (e) => {
+        if(e.code === 'Space') {
+            e.preventDefault();
+            if(!isRevealed) revealCard();
+        }
+        if(isRevealed && !isProcessing) {
+            if(e.key === '1') handleResult('again');
+            if(e.key === '2') handleResult('hard');
+            if(e.key === '3') handleResult('learning');
+            if(e.key === '4') handleResult('mastered');
+            // Arrow keys for accessibility
+            if(e.code === 'ArrowRight') handleResult('mastered');
+            if(e.code === 'ArrowLeft') handleResult('again');
+        }
+    });
+
+    // Start by loading the first card
+    loadCard(0);
+</script>
+{% endblock %}

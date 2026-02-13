@@ -1,0 +1,110 @@
+{# 
+    QUIZ RESULTS (HISTORY VIEW)
+    --------------------------
+    This page allows users to review their performance on a past quiz 
+    session. It shows their score, feedback, and a detailed question 
+    breakdown.
+
+    Key Features for Beginners:
+    1. Score Visualization: A large circular display showing the score.
+    2. Dynamic Feedback: Shows different messages and colors based on 
+       whether the user passed (70%+) or failed.
+    3. Certificate Access: If the score is 75% or higher, a "Claim 
+       Certificate" button appears.
+    4. Tactical Breakdown: A list of every question from the quiz, 
+       showing what the user picked vs. the correct answer.
+    5. Explanation Tooltips: Displays the reasoning behind the correct 
+       answer if available in the database.
+#}
+
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        
+        <!-- SUMMARY CARD: Score & Feedback -->
+        <div class="glass-panel text-center mb-4 position-relative overflow-hidden">
+            <!-- Decorative Glow Background -->
+            <div style="position: absolute; top: -50%; left: 50%; transform: translateX(-50%); width: 300px; height: 300px; background: radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%); z-index: 0;"></div>
+
+            <h6 class="text-white-50 fw-bold text-uppercase mb-4 position-relative">Session Performance</h6>
+            
+            <!-- Circular Score Display -->
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle border border-4 mb-4 position-relative" 
+                 style="width: 180px; height: 180px; border-color: {{ 'var(--primary-accent)' if percentage >= 70 else '#ef4444' }}; box-shadow: 0 0 30px {{ 'rgba(99,102,241,0.3)' if percentage >= 70 else 'rgba(239,68,68,0.3)' }};">
+                <div>
+                    <h1 class="display-3 fw-bold text-white mb-0" style="line-height: 1;">{{ score }}</h1>
+                    <span class="text-white-50 fw-bold">/ {{ total }}</span>
+                </div>
+            </div>
+
+            <!-- Status Message -->
+            <h4 class="text-white fw-bold">{{ "Mission Accomplished" if percentage >= 70 else "Mission Failed" }}</h4>
+            <p class="text-white-50 mb-4" style="max-width: 500px; margin: 0 auto;">{{ feedback }}</p>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light px-4">Exit</a>
+                
+                {% if percentage >= 75 %}
+                <!-- Show Certificate button only for high scores -->
+                <a href="{{ url_for('download_certificate', result_id=result_id) }}" class="btn btn-glow">
+                    <i class="fas fa-certificate me-2"></i> Claim Certificate
+                </a>
+                {% else %}
+                <!-- Suggest repairing mistakes for lower scores -->
+                <a href="{{ url_for('retry_mistakes') }}" class="btn btn-glow">
+                    <i class="fas fa-wrench me-2"></i> Repair Mistakes
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- DETAILED BREAKDOWN: Question-by-question review -->
+        <div class="glass-panel">
+            <h5 class="fw-bold text-white mb-4 ps-2 border-start border-4 border-primary">Tactical Breakdown</h5>
+            
+            <div class="d-flex flex-column gap-3">
+                {% for item in review %}
+                <!-- Individual Review Item -->
+                <div class="p-3 rounded-3" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <!-- Hit/Miss Badge -->
+                        <span class="badge {{ 'bg-success' if item.is_correct else 'bg-danger' }} me-2 mt-1">
+                            {{ 'HIT' if item.is_correct else 'MISS' }}
+                        </span>
+                        <p class="text-white fw-bold mb-0 flex-grow-1">{{ item.question }}</p>
+                    </div>
+                    
+                    <!-- Answers comparison -->
+                    <div class="ms-5 ps-2 border-start border-white border-opacity-10">
+                        <div class="d-flex gap-4 text-small mb-2">
+                            <!-- User's choice -->
+                            <span class="{{ 'text-success' if item.is_correct else 'text-danger' }}">
+                                <i class="fas fa-user me-2"></i>You: <strong>{{ item.user_ans }}</strong>
+                            </span>
+                            <!-- Show correct answer if user was wrong -->
+                            {% if not item.is_correct %}
+                            <span class="text-success">
+                                <i class="fas fa-check me-2"></i>Correct: <strong>{{ item.correct_ans }}</strong> 
+                                <span class="text-white-50 ms-1">({{ item.correct_text }})</span>
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Explanation (if provided in DB) -->
+                        {% if item.explanation and item.explanation != 'No explanation provided.' %}
+                        <div class="text-white-50 small fst-italic mt-2">
+                            <i class="fas fa-info-circle me-1"></i> {{ item.explanation }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

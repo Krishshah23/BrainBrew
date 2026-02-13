@@ -1,0 +1,362 @@
+{# 
+    BATTLE RESULT PAGE
+    ------------------
+    This page displays the outcome of a multiplayer battle. It handles three states:
+    1. Waiting: When one player finishes but others are still playing.
+    2. Final Result: When everyone has finished, showing the winner and scores.
+    3. Rematch: Handling the transition back to a new battle lobby.
+
+    Key Features for Beginners:
+    1. Tie-Breaker Logic: If scores are tied, the faster player wins. This is 
+       calculated in Python and displayed here.
+    2. Auto-Refresh: The page reloads every 3 seconds to check if opponents have 
+       finished or if the host has started a rematch.
+    3. Battle Analysis: A detailed question-by-question breakdown comparing 
+       your answers with your opponent's.
+    4. Confetti Effect: Uses 'canvas-confetti' to celebrate the winner.
+    5. Glassmorphism Design: Consistent with the app's dark, translucent theme.
+#}
+
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Google Font for a futuristic "Gaming" look -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+
+<style>
+    /* Main container styling */
+    .result-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding-bottom: 50px;
+    }
+
+    /* WINNER HEADER - The top section celebrating the victor */
+    .winner-card {
+        background: rgba(0, 0, 0, 0.4);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        padding: 40px;
+        text-align: center;
+        backdrop-filter: blur(15px);
+        margin-bottom: 40px;
+        position: relative;
+        overflow: hidden;
+        animation: slideDown 0.8s ease-out;
+    }
+
+    .winner-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 3rem;
+        text-transform: uppercase;
+        letter-spacing: 5px;
+        margin-bottom: 10px;
+    }
+
+    .trophy-icon {
+        font-size: 5rem;
+        color: #fbbf24;
+        filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.6));
+        margin-bottom: 20px;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    /* SCOREBOARD - Side-by-side player comparison cards */
+    .scoreboard {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom: 50px;
+        flex-wrap: wrap;
+    }
+
+    .player-score-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 20px 30px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        min-width: 250px;
+    }
+    
+    /* Highlight the winner with a golden border */
+    .player-score-card.winner {
+        border-color: #fbbf24;
+        box-shadow: 0 0 30px rgba(251, 191, 36, 0.15);
+        background: rgba(251, 191, 36, 0.05);
+    }
+
+    .p-avatar {
+        width: 60px; height: 60px;
+        border-radius: 50%;
+        border: 3px solid rgba(255,255,255,0.2);
+    }
+
+    .score-badge {
+        font-size: 2rem;
+        font-weight: bold;
+        font-family: 'Orbitron';
+        color: white;
+    }
+
+    /* BATTLE LOG (COMPARISON) - The question-by-question review */
+    .battle-log {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .log-item {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 25px;
+    }
+
+    .log-question {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: white;
+        margin-bottom: 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 15px;
+    }
+
+    .comparison-row {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+    }
+
+    .player-ans-col {
+        flex: 1;
+        background: rgba(255,255,255,0.03);
+        padding: 15px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        border: 1px solid transparent;
+    }
+
+    /* Visual indicators for correct/wrong answers */
+    .player-ans-col.correct { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+    .player-ans-col.wrong { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+
+    /* Animations */
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+    @keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* REMATCH BUTTON - Special golden button for the host */
+    .btn-rematch {
+        background: linear-gradient(45deg, #f59e0b, #d97706);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 50px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+        transition: 0.3s;
+    }
+    .btn-rematch:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 30px rgba(245, 158, 11, 0.6);
+        color: white;
+    }
+</style>
+
+<!-- Confetti Library for victory celebrations -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<div class="container result-container fade-in">
+    
+    {% if all_finished %}
+        {# 
+            FINAL RESULT VIEW
+            -----------------
+            Shown when all participants have submitted their quiz.
+        #}
+        <div class="winner-card">
+            <i class="fas fa-trophy trophy-icon"></i>
+            {% if winner_id == 'DRAW' %}
+                <div class="winner-title text-white">It's a Draw!</div>
+                <p class="text-white-50">Both warriors fought bravely.</p>
+            {% else %}
+                <div class="winner-title" style="color: #fbbf24;">{{ players[winner_id].name }} Wins!</div>
+                
+                {# Explain WHY they won if it was a tie-breaker (speed) #}
+                {% if score_tied %}
+                    <p class="text-warning fw-bold"><i class="fas fa-bolt me-2"></i>Victory by Speed!</p>
+                {% else %}
+                    <p class="text-white-50">Victory has been claimed.</p>
+                {% endif %}
+
+                {% if time_diff is not none %}
+                    <div class="badge bg-success bg-opacity-25 border border-success border-opacity-50 text-white mt-2 px-3 py-2 rounded-pill">
+                        <i class="fas fa-stopwatch me-2"></i>Won by {{ "%.2f"|format(time_diff) }}s
+                    </div>
+                {% endif %}
+            {% endif %}
+            
+            <div class="d-flex justify-content-center gap-3 mt-4">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light rounded-pill px-4">
+                    Return to Base
+                </a>
+                
+                {# Only the host sees the Rematch button #}
+               {% if session.user_id == battle.creator_id %}
+                <a href="{{ url_for('rematch_battle', battle_id=battle_id) }}" class="btn-rematch text-decoration-none">
+                    <i class="fas fa-redo-alt me-2"></i> Rematch
+                </a>
+                {% endif %}
+            
+            </div>
+            
+            {# Non-host players see a "waiting" message #}
+            {% if session.user_id != battle.creator_id %}
+            <p class="mt-3 small text-white-50"><i class="fas fa-sync fa-spin me-2"></i>Waiting for Host to Rematch...</p>
+            {% endif %}
+        </div>
+
+        <!-- Scoreboard: Shows individual player performance -->
+        <div class="scoreboard">
+            {% for pid, p in players.items() %}
+            <div class="player-score-card {% if pid == winner_id %}winner{% endif %}">
+                <img src="{{ p.avatar | avatar(p.name) }}" class="p-avatar">
+                <div style="flex:1">
+                    <div style="font-weight:bold; color:white;">{{ p.name }}</div>
+                    <div class="small text-white-50">Warrior</div>
+                    {% if p.finish_time and battle.start_time %}
+                        <div class="badge bg-secondary mt-1">
+                            <i class="fas fa-clock"></i> {{ "%.1f"|format((p.finish_time - battle.start_time).total_seconds()) }}s
+                        </div>
+                        {% if pid == winner_id %}
+                            <div class="badge bg-warning text-dark mt-1"><i class="fas fa-bolt"></i> Speed Bonus</div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <div class="score-badge">{{ p.score }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Battle Analysis: Detailed answer comparison -->
+        <h4 class="text-white mb-4"><i class="fas fa-microscope me-2"></i>Battle Analysis</h4>
+        <div class="battle-log">
+            {% set my_review = players[current_user]['review'] %}
+            {% if my_review %}
+                {% for i in range(my_review | length) %}
+                <div class="log-item">
+                    <div class="log-question">
+                        <span class="text-white-50 me-2">Q{{ loop.index }}</span>
+                        {{ my_review[i].question }}
+                    </div>
+                    <div class="comparison-row">
+                        {% for pid, p in players.items() %}
+                            {% if p.review %}
+                                {% set ans = p.review[i] %}
+                                <div class="player-ans-col {{ 'correct' if ans.is_correct else 'wrong' }}">
+                                    <img src="{{ p.avatar | avatar(p.name) }}" style="width:30px; height:30px; border-radius:50%;">
+                                    <div style="flex:1">
+                                        <div style="font-size:0.8rem; font-weight:bold; color:rgba(255,255,255,0.7);">{{ p.name }}</div>
+                                        <div class="text-white">
+                                            {% if ans.is_correct %}
+                                                <i class="fas fa-check-circle text-success me-1"></i> Correct
+                                            {% else %}
+                                                <i class="fas fa-times-circle text-danger me-1"></i> {{ ans.user_ans if ans.user_ans else "Timeout" }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="mt-3 small text-success">
+                        <i class="fas fa-key me-1"></i> Correct: <strong>{{ my_review[i].correct_ans }}</strong>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-center text-white-50">Detailed analysis unavailable.</p>
+            {% endif %}
+        </div>
+
+        <script>
+            /**
+             * Auto-Refresh for Rematch Detection
+             * If the host restarts the battle, the 'battle.state' changes in Python.
+             * This refresh forces the page to reload, and the Python logic will 
+             * then redirect the user back to the join/lobby screen.
+             */
+            setTimeout(function(){ window.location.reload(1); }, 3000);
+        </script>
+
+    {% else %}
+        {# 
+            BATTLE IN PROGRESS VIEW
+            -----------------------
+            Shown when you have finished but your opponent is still playing.
+        #}
+        <div class="winner-card">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+            <h2 class="mt-4 text-white">Battle in Progress</h2>
+            <p class="text-white-50">Waiting for opponent to finish...</p>
+            
+            <div class="scoreboard mt-5">
+                {% for pid, p in players.items() %}
+                <div class="player-score-card">
+                    <img src="{{ p.avatar | avatar(p.name) }}" class="p-avatar">
+                    <div style="flex:1; text-align:left;">
+                        <div class="text-white fw-bold">{{ p.name }}</div>
+                        <div class="small {{ 'text-success' if p.finished else 'text-warning' }}">
+                            {{ "Finished" if p.finished else "Fighting..." }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <script>
+            /**
+             * Auto-Refresh to Check Opponent Status
+             * Reloads the page every 3 seconds to see if 'all_finished' has become True.
+             */
+            setTimeout(function(){ window.location.reload(1); }, 3000);
+        </script>
+
+    {% endif %}
+
+</div>
+
+<script>
+    /**
+     * Confetti Trigger
+     * Only fires if the battle is over and there is a clear winner (not a draw).
+     */
+    {% if all_finished and winner_id != 'DRAW' %}
+        var duration = 3000;
+        var animationEnd = Date.now() + duration;
+        var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+        function random(min, max) { return Math.random() * (max - min) + min; }
+
+        var interval = setInterval(function() {
+            var timeLeft = animationEnd - Date.now();
+
+            if (timeLeft <= 0) {
+                return clearInterval(interval);
+            }
+
+            var particleCount = 50 * (timeLeft / duration);
+            // Launch confetti from the left and right sides
+            confetti(Object.assign({}, defaults, { particleCount, origin: { x: random(0.1, 0.3), y: Math.random() - 0.2 } }));
+            confetti(Object.assign({}, defaults, { particleCount, origin: { x: random(0.7, 0.9), y: Math.random() - 0.2 } }));
+        }, 250);
+    {% endif %}
+</script>
+
+{% endblock %}

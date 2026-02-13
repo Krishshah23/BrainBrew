@@ -1,0 +1,123 @@
+{# 
+    QUIZ RESULTS PAGE
+    -----------------
+    This page shows the user their performance after finishing a quiz. 
+    It includes a visual chart, a detailed breakdown of answers, and 
+    a "Certified Result" section.
+
+    Key Features for Beginners:
+    1. Chart.js Integration: We use a popular library called Chart.js to 
+       create the doughnut chart showing Correct vs. Incorrect answers.
+    2. Conditional Styling: The review cards change color (green for correct, 
+       red for incorrect) using Bootstrap border classes based on 'item.is_correct'.
+    3. Jinja2 Templating: We use '{{ score }}' and '{{ total }}' to inject 
+       the data passed from the Flask backend (app.py) into the HTML.
+    4. JavaScript Logic: A small script handles the chart creation and 
+       ensures a date is displayed even if the server doesn't provide one.
+#}
+
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        
+        <!-- MAIN SCORE CARD -->
+        <div class="glass-card p-5 text-center mb-4">
+            <h1 class="display-4 fw-bold text-primary">Score: {{ score }} / {{ total }}</h1>
+            
+            <!-- Doughnut Chart Container -->
+            <div class="row justify-content-center mt-4">
+                <div class="col-md-6">
+                    <canvas id="chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="mt-4 mb-5">
+                <a href="{{ url_for('quiz_setup') }}" class="btn btn-primary">Try Again</a>
+                <a href="{{ url_for('profile') }}" class="btn btn-info">My History</a>
+            </div>
+
+            <!-- OFFICIAL CERTIFICATE SECTION (Design Only) -->
+            <div class="pt-4 border-top" style="border-color: rgba(0,0,0,0.1) !important;">
+                <p class="text-muted small mb-3">OFFICIAL CERTIFIED RESULT FOR <strong class="text-dark">{{ session.name }}</strong></p>
+
+                <div class="d-flex justify-content-center gap-5">
+                    <!-- Signature Section -->
+                    <div class="text-center">
+                        <img src="{{ url_for('static', filename='signature.png') }}" 
+                             style="height: 50px; display: block; margin: 0 auto 5px auto;" 
+                             onerror="this.style.display='none'">
+                        
+                        <div style="border-top: 2px solid #333; width: 150px; font-size: 0.75rem; color: #666; padding-top: 5px;">
+                            AUTHORIZED SIGNATURE
+                        </div>
+                    </div>
+
+                    <!-- Date Section -->
+                    <div class="text-center">
+                        <div id="certDate" style="height: 50px; line-height: 50px; font-weight: bold; font-family: monospace; font-size: 1.1rem;">
+                            {{ date }}
+                        </div>
+                        <div style="border-top: 2px solid #333; width: 150px; font-size: 0.75rem; color: #666; padding-top: 5px;">
+                            DATE RECORDED
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DETAILED REVIEW SECTION -->
+        <div class="glass-card p-4">
+            <h3 class="mb-3"><i class="fas fa-glasses"></i> Detailed Review</h3>
+            
+            {# Loop through each question answered #}
+            {% for item in review %}
+            <div class="card mb-3 border-{{ 'success' if item.is_correct else 'danger' }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ item.question }}</h5>
+                    <p class="card-text">
+                        <strong>Your Answer:</strong> {{ item.user_opt }} 
+                        {% if item.is_correct %} 
+                            <i class="fas fa-check text-success"></i>
+                        {% else %} 
+                            <i class="fas fa-times text-danger"></i> (Correct: {{ item.correct_opt }})
+                        {% endif %}
+                    </p>
+                    <div class="text-muted small">
+                        A: {{ item.options['A'] }} | B: {{ item.options['B'] }} | 
+                        C: {{ item.options['C'] }} | D: {{ item.options['D'] }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- EXTERNAL SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // 1. CHART LOGIC
+    // This creates the colorful circle showing the ratio of correct to incorrect answers.
+    new Chart(document.getElementById('chart'), {
+        type: 'doughnut',
+        data: { 
+            labels: ['Correct', 'Incorrect'], 
+            datasets: [{ 
+                data: [{{ score }}, {{ total - score }}], 
+                backgroundColor: ['#2ecc71', '#e74c3c'] 
+            }] 
+        }
+    });
+
+    // 2. DATE FILLER
+    // If the server didn't provide a date, use the current date from the browser.
+    const dateElem = document.getElementById('certDate');
+    if (!dateElem.innerText.trim()) {
+        const now = new Date();
+        dateElem.innerText = now.toLocaleDateString();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,127 @@
+{# 
+    BOOKMARKS PAGE
+    --------------
+    This page displays questions that the user has "starred" or bookmarked 
+    during their quiz sessions. It acts as a personal study list.
+
+    Key Features for Beginners:
+    1. Saved List: Iterates through bookmarked questions stored in the database.
+    2. AJAX Removal: Uses 'fetch()' to talk to the server and remove a 
+       bookmark without refreshing the entire page.
+    3. Correct Answer Highlighting: Clearly shows which option was correct 
+       for each saved question.
+    4. Explanations: Displays the "Why" behind each question to help 
+       the user learn from their mistakes.
+    5. Empty State: Shows a friendly message if the user hasn't saved 
+       any questions yet.
+#}
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center fade-in">
+    <div class="col-lg-8">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold text-white mb-0">Saved Questions</h2>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light rounded-pill px-4">
+                <i class="fas fa-arrow-left me-2"></i>Dashboard
+            </a>
+        </div>
+
+        {# 
+            Check if the 'questions' list is empty.
+            If empty, show a call-to-action to start a quiz.
+        #}
+        {% if not questions %}
+        <div class="glass-panel p-5 text-center">
+            <i class="fas fa-bookmark fa-3x text-white-50 mb-3"></i>
+            <h4 class="text-white">No Bookmarks Yet</h4>
+            <p class="text-white-50">Star tricky questions during a quiz to review them here.</p>
+            <a href="{{ url_for('quiz_setup') }}" class="btn btn-primary px-4 mt-3">Start a Quiz</a>
+        </div>
+        {% else %}
+        
+        <!-- List of Bookmarked Cards -->
+        <div class="row g-4">
+            {% for q in questions %}
+            <div class="col-12" id="card-{{ q.id }}">
+                <div class="glass-panel p-4 position-relative">
+                    <!-- Delete Button (Top Right) -->
+                    <button class="btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-3 rounded-circle" 
+                            style="width: 32px; height: 32px; display: grid; place-items: center;"
+                            onclick="removeBookmark('{{ q.id }}')"
+                            title="Remove Bookmark">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    
+                    <!-- Category Badge -->
+                    <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25 mb-3">
+                        {{ q.category }}
+                    </span>
+
+                    <!-- Question Text -->
+                    <h5 class="text-white fw-bold mb-3">{{ q.question_text }}</h5>
+                    
+                    <!-- Question Image (If it exists) -->
+                    {% if q.image_file and q.image_file != 'None' %}
+                    <div class="mb-3">
+                        <img src="{{ url_for('static', filename='uploads/' + q.image_file) }}" class="img-fluid rounded" style="max-height: 200px;">
+                    </div>
+                    {% endif %}
+
+                    <!-- Options Grid -->
+                    <div class="row g-2 mb-3">
+                        {% set options = [('A', q.option_a), ('B', q.option_b), ('C', q.option_c), ('D', q.option_d)] %}
+                        {% for key, val in options %}
+                        <div class="col-md-6">
+                            {# Highlight the correct option in green #}
+                            <div class="p-2 border rounded d-flex align-items-center gap-2 {{ 'border-success bg-success bg-opacity-10' if key == q.correct_option else 'border-white border-opacity-10 text-white-50' }}">
+                                <span class="badge {{ 'bg-success' if key == q.correct_option else 'bg-secondary' }} rounded-circle" style="width: 24px; height: 24px; display: grid; place-items: center;">{{ key }}</span>
+                                <small>{{ val }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Explanation Box -->
+                    <div class="p-3 rounded bg-black bg-opacity-25 border border-white border-opacity-10">
+                        <small class="text-warning fw-bold text-uppercase ls-1">Explanation</small>
+                        <p class="text-white-50 small mb-0 mt-1">{{ q.explanation }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+/**
+ * AJAX Function to remove a bookmark
+ * This sends a request to the server in the background.
+ * If successful, it removes the HTML card from the page immediately.
+ */
+function removeBookmark(qId) {
+    if(!confirm('Remove this question from bookmarks?')) return;
+    
+    fetch('/toggle_bookmark', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({question_id: qId})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === 'success') {
+            // Smoothly remove the card from the UI
+            document.getElementById('card-' + qId).remove();
+            
+            // Check if there are any cards left; if none, reload to show empty state
+            const remaining = document.querySelectorAll('[id^="card-"]').length;
+            if(remaining === 0) location.reload();
+        }
+    });
+}
+</script>
+{% endblock %}
