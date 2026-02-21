@@ -1,69 +1,198 @@
-# 🧠 BrainBrew: Gamified Quiz Platform
+BrainBrew – Full Stack Quiz & Battle Platform (3rd Semester Project)
 
-Welcome to **BrainBrew**, a modern, gamified educational platform built with Python (Flask) and SQLite. This project is designed to make learning fun through competitive "Battle Modes," spaced-repetition flashcards, and achievement-based rewards.
+BrainBrew is a full-stack quiz and competitive learning platform built using Flask, SQLite, HTML, CSS, and JavaScript as part of my 3rd semester college project.
 
----
+Unlike a typical academic project, this system was deployed live and tested with real users.
 
-## 🚀 Key Features
+🔗 Live Deployment: Hosted on PythonAnywhere
+🔗 GitHub Repository: https://github.com/Krishshah23/BrainBrew
 
-- **Gamified Quiz Engine**: Dynamic timers, lifelines (if enabled), and instant feedback.
-- **Battle Mode (Multiplayer)**: Real-time competitive lobbies with 6-character room codes.
-- **Flashcard Study**: Anki-style spaced repetition (Again, Hard, Good, Mastered).
-- **Admin Dashboard**: Bulk CSV uploads, question management, and user reporting.
-- **Achievement System**: Earn badges (Rookie, Veteran, Genius) and download PDF certificates for high scores.
-- **Modern UI**: Dark-mode "Glassmorphism" theme using Bootstrap 5 and custom CSS.
+🚀 Project Highlights
 
----
+260+ real users
 
-## 🛠️ Technical Stack
+1000+ quiz attempts within 48 hours of launch
 
-- **Backend**: Python 3, Flask (Web Framework)
-- **Database**: SQLite (Native relational storage)
-- **Frontend**: HTML5, Jinja2 Templates, Bootstrap 5, Vanilla JavaScript
-- **Security**: Password hashing via `werkzeug.security`
-- **Utilities**: `fpdf` (PDF Generation), `csv` (Bulk Uploads), `json` (Result Parsing)
+Live multiplayer battle sessions
 
----
+Adaptive learning system
 
-## 📂 Project Structure (For Beginners)
+Admin command center
 
-- `app.py`: The heart of the application. Handles all routes (pages) and business logic.
-- `database.py`: Contains all SQL queries and database connection logic.
-- `templates/`: Contains HTML files using Jinja2 syntax for dynamic data injection.
-- `static/`: Stores CSS, JavaScript, and user-uploaded files (like profile pictures).
-- `quiz.db`: The SQLite database file where all users and questions are stored.
-- `requirements.txt`: List of Python libraries needed to run the project.
+This project helped me move beyond theoretical implementation into handling real-world usage scenarios.
 
----
+🧠 System Architecture
 
-## 🚦 Getting Started
+The system follows a structured Flask backend architecture:
 
-1.  **Install Dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
+User → Flask Routes → SQLite Database
+Battle Mode → In-memory Dictionary + Persistent Challenge Storage
 
-2.  **Initialize Database**:
-    The app will automatically create `quiz.db` and the necessary tables on its first run via `database.py`.
+Core Backend Concepts Used:
 
-3.  **Run the App**:
-    ```bash
-    python app.py
-    ```
-    Visit `http://127.0.0.1:5000` in your browser.
+Session-based authentication
 
----
+Role-based access control (Admin / Student)
 
-## 🧑‍💻 Beginner's Guide to the Code
+Relational database schema
 
-Each file in this project has been heavily commented to help you understand how it works:
-- **Routes**: Look in `app.py` for `@app.route` decorators—these define the URLs (like `/login` or `/quiz`).
-- **Logic**: Search for "Key Features for Beginners" in the HTML files to understand the UI logic.
-- **Data**: Check `database.py` to see how we talk to SQLite using standard SQL commands.
+JSON-based API responses for dynamic UI updates
 
----
+In-memory state management for multiplayer battles
 
-## 🏆 Development History
-This project was built over 30 days, evolving from a simple quiz app to a full multiplayer platform with streak tracking, battle lobbies, and automated certificate generation.
+⚙️ Key Features
+🔐 Authentication System
 
-**Happy Learning!** 🚀
+Secure password hashing (Werkzeug)
+
+Session management
+
+Daily login streak tracking
+
+Role-based authorization
+
+📝 Dynamic Quiz Engine
+
+Category & difficulty filtering
+
+Randomized question selection
+
+Timer-based quizzes
+
+Automatic scoring logic
+
+JSON-based detailed result storage
+
+Per-category performance analytics
+
+🔁 Repair Station (Mistake Mode)
+
+Detects previously incorrect questions
+
+Dynamically builds retry sessions
+
+Helps improve weak areas
+
+📚 Flashcard Learning System
+
+Smart Mode (blend of new + review)
+
+Tutor Mode (prioritizes weak questions)
+
+Mastery tracking stored per user
+
+⚔️ Multiplayer Battle Mode
+
+6-character room code generation
+
+Live lobby system
+
+Host-controlled battle start
+
+Score + completion time-based winner logic
+
+Real-time in-memory state tracking
+
+Persistent question set storage for rejoin handling
+
+🏆 Leaderboard System
+
+XP-based ranking
+
+Aggregated performance tracking
+
+Streak integration
+
+📊 Performance Dashboard
+
+Category-wise mastery tracking
+
+Skill trajectory graph
+
+Historical quiz reports
+
+Achievement badges
+
+🛠 Admin Command Center
+
+Question CRUD operations
+
+Bulk CSV upload with flexible header detection
+
+Question reporting & moderation
+
+User management
+
+Mastery reset tools
+
+📄 Certificate Generation
+
+Dynamic PDF certificate generation
+
+Unlock condition (75%+ score)
+
+🗄 Database Schema
+
+The platform uses a relational SQLite schema including:
+
+users
+
+questions
+
+results
+
+flashcard_progress
+
+bookmarks
+
+reports
+
+challenges
+
+Foreign key relationships ensure structured data consistency.
+
+🛠 Tech Stack
+
+Backend:
+
+Python
+
+Flask
+
+SQLite
+
+Frontend:
+
+HTML
+
+CSS
+
+JavaScript
+
+Other:
+
+FPDF (PDF generation)
+JSON APIs
+
+PythonAnywhere (Deployment)
+
+💡 What I Learned
+
+Designing relational databases for real-world usage
+
+Managing application state using sessions and in-memory structures
+
+Implementing adaptive learning logic
+
+Handling real users in a deployed environment
+
+Structuring backend routes in Flask
+
+▶️ How to Run Locally
+git clone https://github.com/Krishshah23/BrainBrew.git
+cd BrainBrew
+pip install -r requirements.txt
+python app.py
+📌 Live Version
+
+The project is hosted and accessible via https://kreesh.pythonanywhere.com/
