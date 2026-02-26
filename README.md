@@ -1,139 +1,101 @@
-BrainBrew – Full Stack Quiz & Battle Platform (3rd Semester Project)
+BrainBrew 🚀
 
-BrainBrew is a full-stack quiz and competitive learning platform built using Flask, SQLite, HTML, CSS, and JavaScript as part of my 3rd semester college project.
+Production-deployed Full-Stack Quiz & Multiplayer Battle Platform
 
-Unlike a typical academic project, this system was deployed live and tested with real users.
+🔗 Live: https://kreesh.pythonanywhere.com/
 
-🔗 Live Deployment: Hosted on PythonAnywhere
-🔗 GitHub Repository: https://github.com/Krishshah23/BrainBrew
+🔗 GitHub: https://github.com/Krishshah23/BrainBrew
 
-🚀 Project Highlights
+📊 Impact
 
 260+ real users
 
-1000+ quiz attempts within 48 hours of launch
+1000+ quiz attempts within 48 hours
 
 Live multiplayer battle sessions
 
-Adaptive learning system
+Adaptive learning & mastery tracking
 
-Admin command center
+Built and tested in a real-user environment — not just a classroom submission.
 
-This project helped me move beyond theoretical implementation into handling real-world usage scenarios.
+🧠 What Makes This Project Strong
 
-🧠 System Architecture
+Session-based authentication & role-based access control
 
-The system follows a structured Flask backend architecture:
+Adaptive learning engine (weak-area detection + retry sessions)
 
-User → Flask Routes → SQLite Database
-Battle Mode → In-memory Dictionary + Persistent Challenge Storage
+Real-time multiplayer battle logic using in-memory state
 
-Core Backend Concepts Used:
+Persistent relational database schema with foreign key integrity
 
-Session-based authentication
+JSON-based APIs powering dynamic frontend updates
 
-Role-based access control (Admin / Student)
+This section tells recruiters: “This guy understands backend systems.”
 
-Relational database schema
-
-JSON-based API responses for dynamic UI updates
-
-In-memory state management for multiplayer battles
-
-⚙️ Key Features
-🔐 Authentication System
+⚙️ Core Features
+🔐 Authentication
 
 Secure password hashing (Werkzeug)
 
-Session management
+Role-based authorization (Admin / Student)
 
-Daily login streak tracking
-
-Role-based authorization
+Daily login streak system
 
 📝 Dynamic Quiz Engine
 
-Category & difficulty filtering
+<img width="1063" height="470" alt="image" src="https://github.com/user-attachments/assets/11b80344-9366-480d-bcbf-6f04fbc3315e" />
 
-Randomized question selection
+
+Randomized question generation
+
+Difficulty & category filtering
 
 Timer-based quizzes
 
-Automatic scoring logic
+Auto scoring + detailed JSON result storage
 
-JSON-based detailed result storage
+⚔️ Multiplayer Battle Mode 
 
-Per-category performance analytics
+<img width="1913" height="978" alt="image" src="https://github.com/user-attachments/assets/959ad172-b1cc-4c79-88d5-05162a09067e" />
 
-🔁 Repair Station (Mistake Mode)
 
-Detects previously incorrect questions
+6-character room code system
 
-Dynamically builds retry sessions
+Host-controlled match start
 
-Helps improve weak areas
+Score + completion-time-based winner logic
 
-📚 Flashcard Learning System
+In-memory state management + persistent storage
 
-Smart Mode (blend of new + review)
+📊 Analytics & Dashboard
 
-Tutor Mode (prioritizes weak questions)
+<img width="1918" height="977" alt="image" src="https://github.com/user-attachments/assets/dd0b78e2-ab03-46a6-832b-6822b2c06587" />
 
-Mastery tracking stored per user
 
-⚔️ Multiplayer Battle Mode
-
-6-character room code generation
-
-Live lobby system
-
-Host-controlled battle start
-
-Score + completion time-based winner logic
-
-Real-time in-memory state tracking
-
-Persistent question set storage for rejoin handling
-
-🏆 Leaderboard System
-
-XP-based ranking
-
-Aggregated performance tracking
-
-Streak integration
-
-📊 Performance Dashboard
-
+ 
 Category-wise mastery tracking
 
-Skill trajectory graph
+XP-based leaderboard
 
-Historical quiz reports
+Skill progression reports
 
 Achievement badges
 
-🛠 Admin Command Center
+🛠 Admin Panel
 
-Question CRUD operations
+<img width="1914" height="977" alt="image" src="https://github.com/user-attachments/assets/d7754cfd-3393-423e-8d48-553556dc3165" />
 
-Bulk CSV upload with flexible header detection
 
-Question reporting & moderation
 
-User management
+Full CRUD for questions
 
-Mastery reset tools
+Bulk CSV upload
 
-📄 Certificate Generation
+Reporting & moderation tools
 
-Dynamic PDF certificate generation
+🗄 Database Design
 
-Unlock condition (75%+ score)
-
-🗄 Database Schema
-
-The platform uses a relational SQLite schema including:
+Relational SQLite schema including:
 
 users
 
@@ -145,54 +107,19 @@ flashcard_progress
 
 bookmarks
 
-reports
-
 challenges
 
-Foreign key relationships ensure structured data consistency.
+Foreign key constraints ensure structured and consistent data.
 
 🛠 Tech Stack
 
-Backend:
+Backend: Python, Flask, SQLite
+Frontend: HTML, CSS, JavaScript
+Deployment: PythonAnywhere
+Other: JSON APIs, FPDF
 
-Python
-
-Flask
-
-SQLite
-
-Frontend:
-
-HTML
-
-CSS
-
-JavaScript
-
-Other:
-
-FPDF (PDF generation)
-JSON APIs
-
-PythonAnywhere (Deployment)
-
-💡 What I Learned
-
-Designing relational databases for real-world usage
-
-Managing application state using sessions and in-memory structures
-
-Implementing adaptive learning logic
-
-Handling real users in a deployed environment
-
-Structuring backend routes in Flask
-
-▶️ How to Run Locally
+▶️ Run Locally
 git clone https://github.com/Krishshah23/BrainBrew.git
 cd BrainBrew
 pip install -r requirements.txt
 python app.py
-📌 Live Version
-
-The project is hosted and accessible via https://kreesh.pythonanywhere.com/
