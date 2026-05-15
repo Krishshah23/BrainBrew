@@ -53,20 +53,20 @@
                         <button onclick="document.getElementById('fileInput').click()" 
                                 class="btn btn-sm btn-light position-absolute bottom-0 end-0 rounded-circle border border-dark shadow-sm"
                                 style="width: 36px; height: 36px;" title="Change Photo">
-                            <i class="fas fa-camera text-dark"></i>
+                            <i class="fas fa-camera text-theme-main"></i>
                         </button>
                     </div>
 
                     <!-- User Name & Edit Button -->
                     <div class="d-flex justify-content-center align-items-center gap-2 mb-3">
-                        <h3 class="fw-bold text-white mb-0">{{ session.name }}</h3>
+                        <h3 class="fw-bold text-theme-main mb-0">{{ session.name }}</h3>
                         <button class="btn btn-sm btn-outline-light border-0 rounded-circle" data-bs-toggle="modal" data-bs-target="#editNameModal">
                             <i class="fas fa-pencil-alt"></i>
                         </button>
                     </div>
 
                     <!-- User Role Tag -->
-                    <div class="badge bg-white bg-opacity-10 text-white border border-white border-opacity-20 px-3 py-2 rounded-pill mb-3">
+                    <div class="badge bg-white bg-opacity-10 text-theme-main border border-white border-opacity-20 px-3 py-2 rounded-pill mb-3">
                         {{ session.role|capitalize }}
                     </div>
                 </div>
@@ -77,12 +77,12 @@
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content glass-panel p-0">
                         <div class="modal-header border-bottom border-white border-opacity-10">
-                            <h5 class="modal-title text-white">Update Name</h5>
+                            <h5 class="modal-title text-theme-main">Update Name</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
                         <form action="{{ url_for('update_name') }}" method="POST">
                             <div class="modal-body">
-                                <input type="text" name="name" class="form-control bg-transparent text-white" value="{{ session.name }}" required>
+                                <input type="text" name="name" class="form-control bg-transparent text-theme-main" value="{{ session.name }}" required>
                             </div>
                             <div class="modal-footer border-top border-white border-opacity-10">
                                 <button type="submit" class="btn btn-primary">Save</button>
@@ -94,7 +94,7 @@
 
             <!-- Achievements Card -->
             <div class="glass-panel flex-grow-1">
-                <h6 class="text-white-50 fw-bold text-uppercase mb-4"><i class="fas fa-medal me-2"></i>Achievements</h6>
+                <h6 class="text-theme-muted fw-bold text-uppercase mb-4"><i class="fas fa-medal me-2"></i>Achievements</h6>
                 
                 <div class="d-flex flex-wrap gap-2">
                     {% for b in badges %}
@@ -103,7 +103,7 @@
                          style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
                         <i class="fas {{ b.icon }} text-{{ b.color }} fa-lg"></i>
                         <div>
-                            <span class="d-block text-white fw-bold small">{{ b.name }}</span>
+                            <span class="d-block text-theme-main fw-bold small">{{ b.name }}</span>
                         </div>
                     </div>
                     {% endfor %}
@@ -111,7 +111,7 @@
                     {% if not badges %}
                     <!-- Empty State if no badges earned -->
                     <div class="text-center w-100 py-4">
-                        <i class="fas fa-lock text-white-50 fa-2x mb-2"></i>
+                        <i class="fas fa-lock text-theme-muted fa-2x mb-2"></i>
                         <p class="text-muted small mb-0">Complete quizzes to unlock badges.</p>
                     </div>
                     {% endif %}
@@ -127,7 +127,7 @@
             
             <!-- Performance Graph -->
             <div class="glass-panel">
-                <h6 class="text-white-50 fw-bold text-uppercase mb-3"><i class="fas fa-chart-line me-2"></i>Skill Trajectory</h6>
+                <h6 class="text-theme-muted fw-bold text-uppercase mb-3"><i class="fas fa-chart-line me-2"></i>Skill Trajectory</h6>
                 <div style="height: 280px; width: 100%;">
                     <canvas id="evolutionChart"></canvas>
                 </div>
@@ -135,12 +135,12 @@
 
             <!-- History Table -->
             <div class="glass-panel flex-grow-1">
-                <h6 class="text-white-50 fw-bold text-uppercase mb-3"><i class="fas fa-history me-2"></i>Recent Operations</h6>
+                <h6 class="text-theme-muted fw-bold text-uppercase mb-3"><i class="fas fa-history me-2"></i>Recent Operations</h6>
                 
                 <div class="table-responsive">
-                    <table class="table text-white mb-0" style="--bs-table-bg: transparent;">
+                    <table class="table text-theme-main mb-0" style="--bs-table-bg: transparent;">
                         <thead>
-                            <tr class="text-white-50 small border-bottom border-white border-opacity-10">
+                            <tr class="text-theme-muted small border-bottom border-white border-opacity-10">
                                 <th class="fw-bold ps-0">DATE</th>
                                 <th class="fw-bold">SCORE</th>
                                 <th class="fw-bold text-end pe-0">ANALYSIS</th>
@@ -150,14 +150,14 @@
                             {% for row in history %}
                             <!-- Table Row for each past quiz -->
                             <tr class="align-middle border-bottom border-white border-opacity-10">
-                                <td class="ps-0 py-3 text-white-50">{{ row['timestamp'][:10] }}</td>
+                                <td class="ps-0 py-3 text-theme-muted">{{ row['timestamp'][:10] }}</td>
                                 <td>
-                                    <span class="fw-bold text-white">{{ row['score'] }}</span>
-                                    <span class="text-white-50 small">/{{ row['total_questions'] }}</span>
+                                    <span class="fw-bold text-theme-main">{{ row['score'] }}</span>
+                                    <span class="text-theme-muted small">/{{ row['total_questions'] }}</span>
                                 </td>
                                 <td class="text-end pe-0">
                                     <a href="{{ url_for('view_result', result_id=row['id']) }}" 
-                                       class="btn btn-sm btn-outline-light border-opacity-25 text-white-50 hover-white">
+                                       class="btn btn-sm btn-outline-light border-opacity-25 text-theme-muted hover-white">
                                         View Report
                                     </a>
                                 </td>
