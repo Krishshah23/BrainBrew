@@ -77,24 +77,6 @@
             transition: 0.3s; 
         }
 
-        .nav-link {
-            color: var(--text-muted) !important;
-            transition: color 0.2s ease, opacity 0.2s ease;
-        }
-        .nav-link:hover,
-        .nav-link.active {
-            color: var(--text-main) !important;
-            opacity: 1;
-        }
-
-        .text-theme-main { color: var(--text-main) !important; }
-        .text-theme-muted { color: var(--text-muted) !important; }
-        .surface-theme {
-            background: var(--glass-bg) !important;
-            color: var(--text-main) !important;
-            border: 1px solid var(--glass-border) !important;
-        }
-
         /* The "Glass" effect container */
         .glass-panel { 
             background: var(--glass-bg); 
@@ -166,15 +148,6 @@
         
         /* Force Purple Accents */
         .btn-primary, .bg-primary, .text-primary { background-color: var(--primary-accent) !important; border-color: var(--primary-accent) !important; color: white !important; }
-        .bg-dark {
-            background-color: var(--glass-bg) !important;
-        }
-        .text-white, .text-light {
-            color: var(--text-main) !important;
-        }
-        .text-white-50 {
-            color: var(--text-muted) !important;
-        }
         
         /* Theme Toggle Button Styling */
         .theme-toggle {
@@ -204,7 +177,7 @@
     <!-- Full-page Loader (Visible during form submissions) -->
     <div id="loader">
         <div class="loader-spinner mb-3"></div>
-        <div class="text-theme-main small fw-bold">PROCESSING...</div>
+        <div class="text-white small fw-bold">PROCESSING...</div>
     </div>
 
     <!-- Animated background blobs -->
