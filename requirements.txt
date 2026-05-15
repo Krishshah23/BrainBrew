@@ -6,6 +6,9 @@
 # The core web framework that handles routing, sessions, and template rendering.
 Flask
 
+# Production WSGI server used by Render.
+gunicorn
+
 # Security utilities for hashing and checking user passwords.
 # (Usually comes pre-installed with Flask)
 Werkzeug

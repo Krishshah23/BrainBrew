@@ -52,7 +52,7 @@ from database import get_db_connection # Our helper function from database.py
 app = Flask(__name__)
 
 # Secret Key: Used by Flask to sign session cookies. Keep this safe in production!
-app.secret_key = 'brainbrew_edu_key'
+app.secret_key = os.environ.get('SECRET_KEY', 'brainbrew_edu_key')
 
 # Upload Folder: Where user profile pictures and question images are stored
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
@@ -1332,7 +1332,7 @@ def update_name():
 def upload_profile_pic():
     if 'user_id' not in session: return redirect(url_for('index'))
     if 'file' not in request.files: return redirect(url_for('profile'))
-    file = request.files['file']``
+    file = request.files['file']
     if file.filename == '': return redirect(url_for('profile'))
     if file:
         filename = secure_filename(file.filename)
@@ -1441,7 +1441,7 @@ def internal_error(e):
 # =========================================================
 if __name__ == '__main__':
     # Ensure database exists
-    if not os.path.exists('quiz.db'):
+    if not os.path.exists(os.environ.get('QUIZ_DB_PATH', 'quiz.db')):
         init_db()
         
     # Ensure upload folder exists

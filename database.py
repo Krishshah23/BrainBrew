@@ -13,7 +13,12 @@ What is SQLite?
 - No need to install a big server like MySQL or PostgreSQL.
 """
 
+import os
 import sqlite3
+
+
+def _db_path():
+    return os.environ.get('QUIZ_DB_PATH', 'quiz.db')
 
 def get_db_connection():
     """
@@ -23,8 +28,8 @@ def get_db_connection():
         conn (sqlite3.Connection): The connection object used to interact with the database.
     """
     
-    # Connect to the file 'quiz.db'. If it doesn't exist, SQLite creates it automatically.
-    conn = sqlite3.connect('quiz.db')
+    # Connect to the configured SQLite file. If it doesn't exist, SQLite creates it automatically.
+    conn = sqlite3.connect(_db_path())
     
     # Set row_factory to sqlite3.Row.
     # This allows us to access columns by name (e.g., row['email']) instead of index (row[2]).
