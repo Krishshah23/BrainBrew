@@ -20,12 +20,12 @@
     
     <!-- HEADER: Title and XP/Profile summary -->
     <div class="col-12 d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-white d-none d-md-block">Dashboard</h2>
+        <h2 class="fw-bold text-theme-main d-none d-md-block">Dashboard</h2>
         <div class="d-flex gap-3">
             <!-- XP Display -->
             <div class="glass-panel px-3 py-1 rounded-pill d-flex align-items-center gap-2">
                 <i class="fas fa-fire text-warning"></i>
-                <span class="fw-bold text-white small">{{ total_score if total_score else 0 }} XP</span>
+                <span class="fw-bold text-theme-main small">{{ total_score if total_score else 0 }} XP</span>
             </div>
             
             <!-- Mini Profile -->
@@ -35,7 +35,7 @@
                      width="30" height="30" 
                      style="object-fit: cover;"
                      onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ session.get('name', 'User') }}&background=6366f1&color=fff';">
-                <span class="fw-bold text-white small">{{ session.name }}</span>
+                <span class="fw-bold text-theme-main small">{{ session.name }}</span>
             </div>
         </div>
     </div>
@@ -45,17 +45,17 @@
         <div class="glass-panel p-5 h-100 position-relative overflow-hidden" style="min-height: 500px;">
             <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 40%; background: linear-gradient(to top, rgba(0,0,0,0.5), transparent); pointer-events: none;"></div>
             
-            <h1 class="fw-bold text-white mb-2 display-5">Ready to Brew?</h1>
-            <p class="text-white-50 mb-4">Customize your session parameters.</p>
+            <h1 class="fw-bold text-theme-main mb-2 display-5">Ready to Brew?</h1>
+            <p class="text-theme-muted mb-4">Customize your session parameters.</p>
 
             <!-- Mastery Stats Section -->
             {% if unit_stats %}
             <div class="mb-4 p-3 rounded" style="background: rgba(0,0,0,0.2);">
-                <h6 class="text-white small fw-bold text-uppercase ls-1 mb-3"><i class="fas fa-chart-pie me-2 text-primary"></i>Your Mastery</h6>
+                <h6 class="text-theme-main small fw-bold text-uppercase ls-1 mb-3"><i class="fas fa-chart-pie me-2 text-primary"></i>Your Mastery</h6>
                 <div class="row g-3">
                     {% for cat, pct in unit_stats.items() %}
                     <div class="col-6 col-md-4">
-                        <div class="d-flex justify-content-between small text-white-50 mb-1">
+                        <div class="d-flex justify-content-between small text-theme-muted mb-1">
                             <span class="text-truncate">{{ cat }}</span>
                             <span class="{{ 'text-success' if pct > 75 else 'text-warning' if pct > 40 else 'text-danger' }}">{{ pct }}%</span>
                         </div>
@@ -74,8 +74,8 @@
                 <div class="row g-4 mb-4">
                     <!-- Topic Selection -->
                     <div class="col-md-4">
-                        <label class="text-white-50 small fw-bold mb-2 text-uppercase ls-1">TOPIC</label>
-                        <select name="category" id="categorySelect" class="form-select bg-dark text-white border-secondary p-3" onchange="updateMaxQuestions()">
+                        <label class="text-theme-muted small fw-bold mb-2 text-uppercase ls-1">TOPIC</label>
+                        <select name="category" id="categorySelect" class="form-select surface-theme p-3" onchange="updateMaxQuestions()">
                             <option value="All">⚡ Mix of Everything</option>
                             {% for cat in categories %}
                                 <option value="{{ cat.category }}">{{ cat.category }}</option>
@@ -85,8 +85,8 @@
 
                     <!-- Difficulty Selection -->
                     <div class="col-md-4">
-                        <label class="text-white-50 small fw-bold mb-2 text-uppercase ls-1">DIFFICULTY</label>
-                        <select name="difficulty" id="difficultySelect" class="form-select bg-dark text-white border-secondary p-3" onchange="updateMaxQuestions()">
+                        <label class="text-theme-muted small fw-bold mb-2 text-uppercase ls-1">DIFFICULTY</label>
+                        <select name="difficulty" id="difficultySelect" class="form-select surface-theme p-3" onchange="updateMaxQuestions()">
                             <option value="Random">🎲 Random</option>
                             <option value="Easy">🟢 Easy</option>
                             <option value="Medium">🟡 Medium</option>
@@ -96,8 +96,8 @@
 
                     <!-- Timer Selection -->
                     <div class="col-md-4">
-                        <label class="text-white-50 small fw-bold mb-2 text-uppercase ls-1">TIMER</label>
-                        <select name="time_limit" class="form-select bg-dark text-white border-secondary p-3">
+                        <label class="text-theme-muted small fw-bold mb-2 text-uppercase ls-1">TIMER</label>
+                        <select name="time_limit" class="form-select surface-theme p-3">
                             <option value="300">5 Mins (Standard)</option>
                             <option value="60">1 Min (Blitz)</option>
                             <option value="600">10 Mins (Deep)</option>
@@ -109,12 +109,12 @@
                 <!-- Question Count Slider -->
                 <div class="mb-5">
                     <div class="d-flex justify-content-between mb-2">
-                        <label class="text-white-50 small fw-bold text-uppercase ls-1">SESSION LENGTH</label>
+                        <label class="text-theme-muted small fw-bold text-uppercase ls-1">SESSION LENGTH</label>
                         <span class="badge bg-primary rounded-pill" id="qCountDisplay">Loading...</span>
                     </div>
                     <input type="range" class="form-range custom-range" name="num_questions" id="questionSlider" min="1" max="20" step="1" value="5" 
                            oninput="document.getElementById('qCountDisplay').innerText = this.value + ' Questions'">
-                    <div class="d-flex justify-content-between text-white-50 small mt-2">
+                    <div class="d-flex justify-content-between text-theme-muted small mt-2">
                         <span id="minLabel">1</span>
                         <span id="maxLabel">20 (Max Available)</span>
                     </div>
@@ -143,8 +143,8 @@
                          width="60" height="60" 
                          style="object-fit: cover; border: 2px solid #3b82f6;">
                     
-                    <h4 class="fw-bold text-white mb-1">My Profile</h4>
-                    <p class="text-white-50 small mb-0">{{ session.get('streak', 0) }} Day Streak <i class="fas fa-fire text-warning ms-1"></i></p>
+                    <h4 class="fw-bold text-theme-main mb-1">My Profile</h4>
+                    <p class="text-theme-muted small mb-0">{{ session.get('streak', 0) }} Day Streak <i class="fas fa-fire text-warning ms-1"></i></p>
                 </div>
             </a>
 
@@ -155,10 +155,10 @@
                 <div class="d-flex flex-column align-items-center text-center py-2 position-relative" style="z-index: 2;">
                     <div class="rounded-circle d-flex align-items-center justify-content-center mb-3 shadow-lg" 
                          style="width: 60px; height: 60px; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.4);">
-                        <i class="fas fa-bolt text-white" style="font-size: 1.5rem;"></i>
+                        <i class="fas fa-bolt text-theme-main" style="font-size: 1.5rem;"></i>
                     </div>
-                    <h4 class="fw-bold text-white mb-1">Battle Mode</h4>
-                    <p class="text-white-50 small mb-0">Challenge a peer.</p>
+                    <h4 class="fw-bold text-theme-main mb-1">Battle Mode</h4>
+                    <p class="text-theme-muted small mb-0">Challenge a peer.</p>
                 </div>
             </a>
 
@@ -169,10 +169,10 @@
                  <div class="d-flex flex-column align-items-center text-center py-2 position-relative" style="z-index: 2;">
                     <div class="rounded-circle d-flex align-items-center justify-content-center mb-3 shadow-lg" 
                          style="width: 60px; height: 60px; background: rgba(236, 72, 153, 0.2); border: 1px solid rgba(236, 72, 153, 0.4);">
-                        <i class="fas fa-wrench text-white" style="font-size: 1.5rem;"></i>
+                        <i class="fas fa-wrench text-theme-main" style="font-size: 1.5rem;"></i>
                     </div>
-                    <h4 class="fw-bold text-white mb-1">Repair Station</h4>
-                    <p class="text-white-50 small mb-0">Review past mistakes.</p>
+                    <h4 class="fw-bold text-theme-main mb-1">Repair Station</h4>
+                    <p class="text-theme-muted small mb-0">Review past mistakes.</p>
                 </div>
             </a>
 
@@ -182,10 +182,10 @@
                  <div class="d-flex flex-column align-items-center text-center py-2 position-relative" style="z-index: 2;">
                     <div class="rounded-circle d-flex align-items-center justify-content-center mb-3 shadow-lg" 
                          style="width: 60px; height: 60px; background: rgba(255, 193, 7, 0.2); border: 1px solid rgba(255, 193, 7, 0.4);">
-                        <i class="fas fa-bookmark text-white" style="font-size: 1.5rem;"></i>
+                        <i class="fas fa-bookmark text-theme-main" style="font-size: 1.5rem;"></i>
                     </div>
-                    <h4 class="fw-bold text-white mb-1">Saved Qs</h4>
-                    <p class="text-white-50 small mb-0">Access bookmarked items.</p>
+                    <h4 class="fw-bold text-theme-main mb-1">Saved Qs</h4>
+                    <p class="text-theme-muted small mb-0">Access bookmarked items.</p>
                 </div>
             </a>
             
