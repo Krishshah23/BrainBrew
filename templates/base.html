@@ -45,6 +45,18 @@
             --input-bg: rgba(255, 255, 255, 0.1);
             --nav-bg: rgba(10, 10, 10, 0.95);
             --blob-opacity: 0.4;
+
+            --bs-body-bg: var(--bg-color);
+            --bs-body-color: var(--text-main);
+            --bs-emphasis-color: var(--text-main);
+            --bs-secondary-color: var(--text-muted);
+            --bs-tertiary-color: var(--text-muted);
+            --bs-border-color: var(--glass-border);
+            --bs-heading-color: var(--text-main);
+            --bs-link-color: var(--text-main);
+            --bs-link-hover-color: var(--primary-accent);
+            --bs-table-color: var(--text-main);
+            --bs-table-bg: transparent;
         }
 
         /* LIGHT MODE SETTINGS (Active when data-theme="light") */
@@ -60,6 +72,18 @@
             --input-bg: rgba(0, 0, 0, 0.06); 
             --nav-bg: rgba(255, 255, 255, 0.9);
             --blob-opacity: 0.2;
+
+            --bs-body-bg: var(--bg-color);
+            --bs-body-color: var(--text-main);
+            --bs-emphasis-color: var(--text-main);
+            --bs-secondary-color: var(--text-muted);
+            --bs-tertiary-color: var(--text-muted);
+            --bs-border-color: var(--glass-border);
+            --bs-heading-color: var(--text-main);
+            --bs-link-color: var(--text-main);
+            --bs-link-hover-color: var(--primary-accent);
+            --bs-table-color: var(--text-main);
+            --bs-table-bg: transparent;
         }
 
         /* 
@@ -76,6 +100,8 @@
             position: relative; 
             transition: 0.3s; 
         }
+        html[data-theme="dark"] { color-scheme: dark; }
+        html[data-theme="light"] { color-scheme: light; }
 
         .nav-link {
             color: var(--text-muted) !important;
@@ -109,6 +135,27 @@
         .text-body,
         .text-body-secondary {
             color: var(--text-muted) !important;
+        }
+        .table {
+            --bs-table-color: var(--text-main);
+            --bs-table-striped-color: var(--text-main);
+            --bs-table-hover-color: var(--text-main);
+            --bs-table-border-color: var(--glass-border);
+        }
+        .btn-light {
+            background-color: var(--glass-bg) !important;
+            color: var(--text-main) !important;
+            border-color: var(--glass-border) !important;
+        }
+        .btn-outline-light {
+            color: var(--text-main) !important;
+            border-color: var(--glass-border) !important;
+        }
+        .btn-outline-light:hover,
+        .btn-light:hover {
+            background-color: var(--primary-accent) !important;
+            color: #fff !important;
+            border-color: var(--primary-accent) !important;
         }
 
         /* The "Glass" effect container */
