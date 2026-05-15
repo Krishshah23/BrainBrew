@@ -11,4 +11,4 @@ Flask
 Werkzeug
 
 # A library for generating dynamic PDF files (used for Achievement Certificates).
-fpdf
+fpdf2
