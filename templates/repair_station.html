@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="glass-panel">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold text-white mb-1">Repair Station</h2>
+                    <p class="text-white-50 mb-0">Practice unresolved mistakes until they are fixed.</p>
+                </div>
+                <a href="{{ url_for('repair.retry_mistakes', category=selected_category) }}" class="btn btn-glow {% if pending_count == 0 %}disabled{% endif %}">
+                    <i class="fas fa-play me-2"></i>Start Repair Quiz
+                </a>
+            </div>
+
+            <form method="GET" action="{{ url_for('repair.repair_station') }}" class="row g-3 align-items-end mb-4">
+                <div class="col-md-8">
+                    <label class="text-white-50 small fw-bold mb-2">CATEGORY FILTER</label>
+                    <select name="category" class="form-select">
+                        <option value="All" {% if selected_category == 'All' %}selected{% endif %}>All categories</option>
+                        {% for c in categories %}
+                        <option value="{{ c['category'] }}" {% if selected_category == c['category'] %}selected{% endif %}>
+                            {{ c['category'] }} ({{ c['cnt'] }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-outline-light w-100">Apply Filter</button>
+                </div>
+            </form>
+
+            {% if preview_questions %}
+            <div class="table-responsive">
+                <table class="table text-white mb-0" style="--bs-table-bg: transparent;">
+                    <thead><tr><th>Question</th><th>Category</th><th>Difficulty</th></tr></thead>
+                    <tbody>
+                        {% for q in preview_questions %}
+                        <tr class="border-bottom border-white border-opacity-10">
+                            <td class="text-white-50">{{ q['question_text'] }}</td>
+                            <td>{{ q['category'] }}</td>
+                            <td>{{ q['difficulty'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-check-circle text-success fa-2x mb-3"></i>
+                <h5 class="text-white">No pending mistakes in this filter.</h5>
+                <p class="text-white-50 mb-0">Try another category or continue regular practice.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="d-flex flex-column gap-3">
+            <div class="glass-panel text-center">
+                <p class="text-white-50 mb-1 small">Pending Mistakes</p>
+                <h2 class="fw-bold text-danger mb-0">{{ pending_count }}</h2>
+            </div>
+            <div class="glass-panel text-center">
+                <p class="text-white-50 mb-1 small">Fixed Today</p>
+                <h2 class="fw-bold text-success mb-0">{{ fixed_today }}</h2>
+            </div>
+            <a href="{{ url_for('dashboard') }}" class="glass-panel text-center text-white text-decoration-none">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

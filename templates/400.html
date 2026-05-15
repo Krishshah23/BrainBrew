@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="glass-panel text-center">
+            <h2 class="fw-bold text-warning mb-3">Bad Request</h2>
+            <p class="text-white-50 mb-4">The request could not be processed. Please refresh and try again.</p>
+            <a href="{{ url_for('dashboard') if session.get('user_id') else url_for('index') }}" class="btn btn-glow">Go Back</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
